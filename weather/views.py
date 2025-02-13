@@ -1,0 +1,252 @@
+from datetime import datetime
+
+import requests
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import AuthenticationForm
+from django.core.mail import send_mail
+from django.db.models import QuerySet
+from django.http import (HttpResponse, HttpResponseBadRequest,
+                         HttpResponseForbidden, HttpResponseRedirect,
+                         JsonResponse, StreamingHttpResponse)
+from django.shortcuts import redirect, render
+from django.views import View
+from django_ratelimit.decorators import ratelimit
+# Create your views here.
+from twilio.rest import Client
+
+from .forms import CustomRegistrationForm
+from .models import CustomUser, Profile
+from .weather import main
+
+
+def get_home(request):
+    return render(request, 'index.html')
+
+
+# views.py
+
+
+def register(request):
+    if request.method == 'POST':
+        form = CustomRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Send verification email
+            verification_url = request.build_absolute_uri(
+                f'/verify-email/{user.verification_token}/')
+            send_mail(
+                'Verify your email',
+                f'Please click the link to verify your email: {verification_url}',
+                'from@example.com',
+                [user.email],
+                fail_silently=False,
+            )
+            messages.success(
+                request, 'Registration successful! Please verify your email to activate your account.')
+            return redirect('verification_pending')
+    else:
+        form = CustomRegistrationForm()
+    return render(request, 'registration/register.html', {'form': form})
+
+
+def verification_pending(request):
+    return render(request, 'registration/verification_pending.html')
+
+
+# views.py (continued)
+
+
+def verify_email(request, token):
+    try:
+        user = CustomUser.objects.get(verification_token=token)
+        user.is_active = True  # Activate the user account
+        user.email_verified = True  # Mark the email as verified
+        user.verification_token = None  # Clear the token after verification
+        user.save()
+        messages.success(
+            request, 'Email verified successfully! You can now log in.')
+        return redirect('login')  # Redirect to login page
+    except CustomUser.DoesNotExist:
+        messages.error(request, 'Invalid verification link.')
+        return redirect('login')
+
+
+@ratelimit(key='ip', rate='5/m', method='ALL', block=True)
+def user_login(request):
+
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden('Rate limit exceeded')
+
+    if request.method == "POST":
+        # Instantiate the form with submitted data
+        form = AuthenticationForm(request, data=request.POST)
+
+        # Check wether the form is valid
+        if form.is_valid():
+            cd = form.cleaned_data
+            user = authenticate(
+                request, username=cd['username'], password=cd['password'])
+
+            # Check if the user exists
+            try:
+                user = CustomUser.objects.get(username=cd["username"])
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'User does not exist.')
+                return render(request, 'home')
+
+            # User exists
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    # messages.success(request, f'Welcome, {cd["username"]}. You are now logged in.')
+                    return redirect('home')
+
+                else:
+                    messages.error(request, 'Account is disabled❌')
+                    # HttpResponse('<script>alert("Account is disabled❌")</script>')
+
+            # User exists
+            else:
+                messages.error(request, 'Incorrect login credentials')
+        else:
+            messages.error(request, 'Invalid username or password.')
+
+    # When the user_login view is submitted via GET request a new login form is Instantiated with for = LoginForm() to display it in the template.
+    else:
+        # form = LoginForm()
+        form = AuthenticationForm()
+    return render(request, 'index.html', {'form': form})
+
+
+def GetLocationDetail(request, name=False, coord=False):
+    """
+    Fetch farm details for the currently logged-in user.
+    If no flags (name or coord) are provided, return all data in dictionary form.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'User not authenticated'}, status=401)
+
+    # Fetch the user's profile
+    user_profile = Profile.objects.filter(user=request.user)
+
+    if not user_profile.exists():
+        return JsonResponse({'error': 'No locations found for the user'}, status=404)
+
+    if not name and not coord:
+        # Return all data in dictionary form
+        all_data = [loc.__dict__ for loc in user_profile]
+        for loc_data in all_data:
+            loc_data.pop('_state', None)
+        return JsonResponse(all_data, safe=False)
+
+    # Determine the field to retrieve based on the flag
+    field = 'location_coordinates' if coord else 'location_name'
+
+    # Retrieve the specific field data
+    data = user_profile.values_list(field, flat=True)
+
+    return JsonResponse(list(data), safe=False)
+
+
+def get_weather_page(request):
+    # Get all locations from the database or source
+    # Ensure this function returns a list of locations
+    locations = GetLocationDetail(request, locations=True)
+    farmNames = GetLocationDetail(request, names=True)
+    weather_data_list = []
+    error_locations = []
+
+    # Fetch weather data for each location
+    if locations:
+        for loc, farmName in zip(locations, farmNames):
+            try:
+                # Retrieve weather data for the current location
+                weekly_data = main(loc)
+                hourly_data = main(loc, _type='hourly3')
+
+                # Check for API errors
+                if isinstance(weekly_data, str) and weekly_data in ("RequestFailure", "ConnectionError"):
+                    error_locations.append(
+                        {"location": loc, "error": weekly_data})
+                    continue
+                if isinstance(hourly_data, str) and hourly_data in ("RequestFailure", "ConnectionError"):
+                    error_locations.append(
+                        {"location": loc, "error": hourly_data})
+                    continue
+
+                # Process and format weather data
+                weather_data = {
+                    "location": hourly_data.get("name"),
+                    "country": hourly_data["sys"].get("country"),
+                    # Convert to Celsius
+                    "temperature": hourly_data["main"].get("temp") - 273.15,
+                    "icon": hourly_data["weather"][0].get("icon"),
+                    "visibility": hourly_data["visibility"],
+                    "feels_like": hourly_data["main"].get("feels_like") - 273.15,
+                    "humidity": hourly_data["main"].get("humidity"),
+                    "pressure": hourly_data["main"].get("pressure"),
+                    "wind_speed": hourly_data["wind"].get("speed"),
+                    "wind_direction": hourly_data["wind"].get("deg"),
+                    "weather_main": hourly_data["weather"][0].get("main"),
+                    "weather_description": hourly_data["weather"][0].get("description"),
+                    "rain_last_hour": hourly_data.get("rain", {}).get("1h", 0),
+                    "cloud_cover": hourly_data["clouds"].get("all"),
+                    "sunrise": datetime.fromtimestamp(hourly_data["sys"].get("sunrise")).strftime("%H:%M:%S"),
+                    "sunset": datetime.fromtimestamp(hourly_data["sys"].get("sunset")).strftime("%H:%M:%S"),
+                    "weekly": weekly_data,  # Weekly forecast data
+                }
+
+                # Append processed data to the list
+                weather_data_list.append(weather_data)
+
+            except Exception as e:
+                # Log errors for debugging
+                raise
+                error_locations.append({"location": loc, "error": str(e)})
+
+        # Render the data in the template
+        context = {
+            "weather_data_list": weather_data_list
+        }
+        if error_locations and weather_data_list == []:
+            return render(request, 'error.html', {"error_message": error_locations}, status=404)
+        return render(request, 'weather.html', context)
+    else:
+        return render(request, 'error.html', {'error_message': 'Could not obtain Forecast: -> No Farm Locations set!'}, status=404)
+
+
+def send_sms(message):
+    account_sid = 'YOUR_TWILIO_ACCOUNT_SID'
+    auth_token = 'YOUR_TWILIO_AUTH_TOKEN'
+    client = Client(account_sid, auth_token)
+    message = client.messages.create(
+        body=message,
+        from_='YOUR_TWILIO_PHONE_NUMBER',
+        to='RECIPIENT_PHONE_NUMBER'
+    )
+    return message.sid
+
+
+class WeatherView(View):
+    def get(self, request):
+        api_key = 'YOUR_API_KEY'
+        city = 'Your_City'
+        url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}'
+        response = requests.get(url)
+        data = response.json()
+        return JsonResponse(data)
+
+
+class WeatherNotificationView(View):
+    def get(self, request):
+        weather_data = requests.get(
+            'http://api.openweathermap.org/data/2.5/weather?q=Your_City&appid=YOUR_API_KEY').json()
+        weather_description = weather_data.get(
+            'weather', [{}])[0].get('description', '')
+        if 'rain' in weather_description.lower():
+            message = "It's going to rain today. Don't forget your umbrella!"
+            send_sms(message)
+            return JsonResponse({'status': 'Notification sent'})
+        else:
+            return JsonResponse({'status': 'No rain forecasted'})

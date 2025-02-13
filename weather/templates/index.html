@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherGuard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body class="bg-radial-3 dark:bg-gray-950 transition-colors duration-300">
+    <header class="flex w-full z-10 mb-12 bg-blue-500 justify-between items-center px-4">
+        <div class="text-center">
+            <h1 class="text-2xl font-bold text-[#34318c] dark:text-[#a8a4ff]">
+                <span class="inline-block animate-fade-in">WeatherGuard</span>
+            </h1>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Your weather companion</p>
+        </div>
+        <section>
+            <button id="settings-button"
+                    onclick="document.getElementById('settings-modal').classList.remove('hidden');"
+                    class="relative bg-indigo-600 inline-flex items-center justify-center hover:text-black overflow-hidden font-medium text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition duration-300 ease-out group">
+                <span class="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-[#ffff00] group-hover:translate-x-0 ease">
+                    <svg style="width: 42px; height: 42px; fill: #ff5722;" viewBox="0 0 24 24">
+                        <path d="M14.04 12c-.06-.08-.12-.16-.19-.25L15.47 12.69c.81.72 1.31 1.65 1.48 2.64l1.01-.31c-.05-.65-.15-1.29-.3-1.91zm2.35 2.13c-.6.23-1.24.41-1.91.52l-.3-1.01c.72-.81 1.65-1.31 2.63-1.48l1.01.3c.65-.05 1.29-.15 1.92-.3zm7.7-4.21c-.39-.15-.77-.33-1.17-.54l-1.77 1.77c-3.02-3.03-7.64-4.81-12.59-4.37l1.05 1.05c4.57.42 8.44 2.41 10.59 5.37zm-8.48 1.48l-2.83-2.83c-.14-.14-.33-.22-.53-.22s-.39.08-.53.22-.22.33-.22.53.08.39.22.53l2.83 2.83c.14.14.33.22.53.22s.39-.08.53-.22c.13-.14.21-.33.21-.53-.01-.2-.09-.39-.21-.53zM16.09 7.09c.63.63 1.71.63 2.34 0s.63-1.71 0-2.34-1.71-.63-2.34 0-.63 1.71 0 2.34zm-1.67 0h1.67v3.32h-3.34v-1.67c0-.46.37-.83.83-.83s.83.37.83.83v1.67h-1.67v-1.67c0-.46-.37-.83-.83-.83s-.83.37-.83.83v1.67z" />
+                    </svg>
+                </span>
+                <span class="absolute inset-0 flex items-center justify-center w-full h-full text-indigo-600 transition-all duration-300 transform -translate-x-full group-hover:translate-x-0 ease">
+                    Settings
+                </span>
+                <span class="relative">Settings</span>
+            </button>
+
+            <button class="relative bg-[#00557f] inline-flex items-center justify-center px-4 py-2 overflow-hidden font-medium text-indigo-200 hover:text-black transition duration-300 ease-out border-2 border-[#a10051] rounded-2xl shadow-2xl group" onclick="document.getElementById('userLogin-modal').classList.remove('hidden');">
+                <span class="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-[#62c300] group-hover:translate-x-0 ease">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                    </svg>
+                </span>
+                <span class="absolute flex items-center justify-center w-full h-full text-indigo-600 transition-all duration-300 transform group-hover:translate-x-full ease">
+                    Login
+                </span>
+                <span class="relative">Login</span>
+            </button>
+        </section>
+    </header>
+    <div class="container mx-auto px-4 mt-12">
+        <main class="flex flex-col md:flex-row gap-8 min-h-[600px] p-6">
+            <!-- Current Weather Section -->
+            <div class="flex-1 basis-[300px] bg-white/50 dark:bg-gray-800 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/10 ring-1 ring-gray-200 dark:ring-gray-700 p-3">
+                <div id="current-weather" class="">
+                    <h2 class="text-3xl font-semibold mb-8 text-gray-900 dark:text-gray-100 opacity-90">
+                        <span class="uppercase">Current Weather</span>
+                        <sup class="text-sm ml-2 opacity-75">Your Location</sup>
+                    </h2>
+
+                    <div class="flex items-center justify-between p-8 transition-all hover:shadow-3xl">
+                        <div class="flex flex-col space-y-3">
+                            <p class="text-5xl font-bold" id="current-temperature">23°C</p>
+                            <p class="text-lg font-medium text-gray-600 dark:text-gray-400" id="current-description">Sunny</p>
+                        </div>
+                        <img id="current-icon" class="w-24 h-24" src="https://openweathermap.org/img/wn/01d@2x.png" alt="Weather Icon">
+                    </div>
+                </div>
+
+                <div id="no-weather" class="flex flex-col items-center justify-center text-center py-16 px-8 opacity-90">
+                    <p class="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+                        No Weather Data Available
+                        <span class="text-lg text-red-500">⚠️</span>
+                    </p>
+                    <p class="text-lg text-gray-600 dark:text-gray-400 mb-8">
+                        Please provide your location to access weather information.
+                    </p>
+                    <button id="settings-button" onclick="document.getElementById('settings-modal').classList.remove('hidden');"
+                            class="bg-[#6366f1] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#4f46e5] transition-colors shadow-lg shadow-gray-200 dark:shadow-gray-800">
+                        Set Location
+                    </button>
+                </div>
+            </div>
+
+            <!-- Weekly Forecast Section -->
+            <div class="flex-1 p-3 basis-[480px] bg-white/50 dark:bg-gray-800 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/10 ring-1 ring-gray-200 dark:ring-gray-700">
+                <h2 class="text-3xl font-semibold mb-8 text-gray-900 dark:text-gray-100 opacity-90">
+                    <span class="uppercase">7-Day Forecast</span>
+                </h2>
+
+                <div id="weekly-forecast" class="space-y-6">
+                    <!-- Forecast cards will be dynamically added here -->
+                    <div class="bg-white dark:bg-gray-700/50 p-6 rounded-xl shadow-xl">
+                        <p class="text-xl font-bold text-gray-900 dark:text-gray-100">Tomorrow</p>
+                        <p class="text-gray-600 dark:text-gray-400">Sunny</p>
+                        <p class="text-2xl font-bold text-[#6366f1] dark:text-[#a8a4ff]">24°C</p>
+                    </div>
+                    <!-- Add more cards as needed -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="relative bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-fit max-h-[95vh] overflow-y-auto bg-gradient-to-b from-[#ffaa00] via-[#ff5500] via-[#de0000] to-[#b10085]">
+                <!-- Close Button -->
+                <button id="closeModal" class="absolute top-2 right-2 text-cyan-800 dark:text-gray-500 hover:text-[#0b03ff] dark:hover:text-gray-400 hover:rotate-90 transition duration-300" onclick="document.getElementById('settings-modal').classList.add('hidden');">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <h2 class="text-2xl font-bold mb-4 text-blue-600 dark:text-blue-400">Settings</h2>
+                <div class="block md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:grid-flow-row-dense gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div id="location-display" class="flex-1 p-2 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-between">
+                                <span id="location-value" class="text-sm text-gray-700 dark:text-gray-300"></span>
+                                <button id="edit-location" class="text-blue-600 hover:text-blue-800">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="location-edit" class="flex-1 p-2 border border-gray-300 rounded-md text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 flex items-center gap-2 hidden">
+                                <input type="text" id="location-input" class="flex-1 p-2 border border-gray-300 rounded-md text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300" placeholder="Enter your city">
+                                <button id="save-location" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
+                                <button id="cancel-edit" class="text-red-600 hover:text-red-800">Cancel</button>
+                            </div>
+                            <button id="auto-detect-button" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Auto-Detect</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notification Options</label>
+                        <div class="mt-1 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="sms-notification" class="form-checkbox h-5 w-5 text-blue-600">
+                                <label class="text-sm">SMS</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="email-notification" class="form-checkbox h-5 w-5 text-blue-600">
+                                <label class="text-sm">Email</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notification Frequency</label>
+                        <div class="mt-1 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="hourly-notification" class="form-checkbox h-5 w-5 text-blue-600">
+                                <label class="text-sm">Hourly</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="daily-notification" class="form-checkbox h-5 w-5 text-blue-600">
+                                <label class="text-sm">Daily</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="weekly-notification" class="form-checkbox h-5 w-5 text-blue-600">
+                                <label class="text-sm">Weekly</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Verbosity</label>
+                        <div class="mt-1 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <input type="radio" id="low-verbosity" name="verbosity" value="low" class="form-radio h-5 w-5 text-blue-600" checked>
+                                <label class="text-sm">Low</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="radio" id="medium-verbosity" name="verbosity" value="medium" class="form-radio h-5 w-5 text-blue-600">
+                                <label class="text-sm">Medium</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="radio" id="high-verbosity" name="verbosity" value="high" class="form-radio h-5 w-5 text-blue-600">
+                                <label class="text-sm">High</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">User Details</label>
+                        <div class="mt-1 space-y-2">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                                <input type="text" id="username-input" class="mt-1 p-2 border border-gray-300 rounded-md text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                                <input type="text" id="phone-input" class="mt-1 p-2 border border-gray-300 rounded-md text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                                <input type="email" id="email-input" class="mt-1 p-2 border border-gray-300 rounded-md text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-center mt-6">
+                    <button id="save-settings" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Login Modal -->
+    <div id="userLogin-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="relative bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg max-w-lg w-full max-h-[95vh] overflow-y-auto">
+            <!-- Close Button -->
+            <button id="closeModal" class="absolute top-2 right-2 text-cyan-800 dark:text-gray-500 hover:text-[#0b03ff] dark:hover:text-gray-400 hover:rotate-90 transition duration-300" onclick="document.getElementById('userLogin-modal').classList.add('hidden');">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold mb-4 text-blue-600 dark:text-blue-400 text-center">User Onboarding</h2>
+            <form id="userForm" action="{% url 'onboard' %}" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                <!-- Account Information -->
+                <div class="form-group">
+                    <label for="username" value="{{ form.username.value|default:'' }}" class="block text-gray-700 dark:text-gray-300 font-medium">Username</label>
+                    <input type="text" id="username" name="username" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    {% for error in form.errors.username %}
+                    <p class="text-sm text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="email" class="block text-gray-700 dark:text-gray-300 font-medium">Email</label>
+                    <input type="email" id="email" name="email" value="{{ form.email.value|default:'' }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    {% for error in form.errors.email %}
+                    <p class="text-sm text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="password1" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password1" name="password1" value="{{ form.password1.value|default:'' }}" class="appearance-none block w-full px-3 py-2 border {% if form.errors.password1 %}border-red-500{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    {% for error in form.errors.password1 %}
+                    <p class="text-sm text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="password2" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <input type="password" id="password2" name="password2" value="{{ form.password2.value|default:'' }}" class="appearance-none block w-full px-3 py-2 border {% if form.errors.password2 %}border-red-500{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    {% for error in form.errors.password2 %}
+                    <p class="text-sm text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="phone" class="block text-gray-700 dark:text-gray-300 font-medium">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" value="{{ form.phone.value|default:'' }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    {% for error in form.errors.phone %}
+                    <p class="text-sm text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="location" class="block text-gray-700 dark:text-gray-300 font-medium">Location</label>
+                    <input type="text" id="location_name" name="location_name" value="{{ form.location_name.value|default:'' }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded bg-gray-100 dark:bg-gray-800 focus:outline-none" value="Fetching location..." readonly>
+                    {% for error in form.errors.location_name %}
+                    <p class="text-sm text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <button id="submit" type="submit" class="w-full bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Submit</button>
+            </form>
+        </div>
+    </div>
+
+        <!-- Location Modal -->
+    <div id="userLogin-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="relative bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg max-w-lg w-full max-h-[95vh] overflow-y-auto">
+            <!-- Close Button -->
+            <button id="closeModal" class="absolute top-2 right-2 text-cyan-800 dark:text-gray-500 hover:text-[#0b03ff] dark:hover:text-gray-400 hover:rotate-90 transition duration-300" onclick="document.getElementById('userLogin-modal').classList.add('hidden');">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold mb-4 text-blue-600 dark:text-blue-400 text-center">User Onboarding</h2>
+            <form id="userForm" class="space-y-4">
+                <div class="form-group">
+                    <label for="location" class="block text-gray-700 dark:text-gray-300 font-medium">Location</label>
+                    <input type="text" id="location" name="location" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded bg-gray-100 dark:bg-gray-800 focus:outline-none" value="Fetching location..." readonly>
+                </div>
+                <div class="form-group">
+                    <label for="location-coord" class="block text-gray-700 dark:text-gray-300 font-medium">Location</label>
+                    <input type="text" id="location" name="location" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded bg-gray-100 dark:bg-gray-800 focus:outline-none" value="Fetching location..." readonly>
+                </div>
+                <button id="submit" type="submit" class="w-full bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Submit</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        const submitBt = document.getElementById('submit')
+        const location = document.getElementById('location')
+        if (navigator.geolocation) {
+            submitBt.classList.add("cursor-not-allowed")
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                location.value = `Latitude: ${latitude}, Longitude: ${longitude}`;
+                submitBt.classList.remove("cursor-not-allowed")
+            }, function(error) {
+                location.value = "Unable to fetch location";
+                location.removeAttribute('readonly')
+                submitBt.classList.remove("cursor-not-allowed")
+            });
+        } else {
+            location.value = "Geolocation is not supported by this browser.";
+        }
+
+        document.getElementById('userForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const userData = {};
+            formData.forEach((value, key) => {
+                userData[key] = value;
+            });
+            console.log(userData);
+            alert('Form submitted successfully!');
+        });
+    });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

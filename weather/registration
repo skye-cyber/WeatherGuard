@@ -1,0 +1,13 @@
+<!-- registration/verification_pending.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Pending</title>
+</head>
+<body>
+    <h2>Verification Pending</h2>
+    <p>Registration successful! Please check your email and verify your account to activate it.</p>
+</body>
+</html>
