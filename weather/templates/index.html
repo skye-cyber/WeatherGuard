@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WeatherGuard</title>
+    {% load custom_filters %}
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="/home/skye/WeatherGuard/weather/static/css/styles.css">
 </head>
 <body class="bg-radial-3 dark:bg-gray-950 transition-colors duration-300">
     <header class="flex w-full z-10 mb-12 bg-blue-500 justify-between items-center px-4">
@@ -90,8 +92,102 @@
                         <p class="text-gray-600 dark:text-gray-400">Sunny</p>
                         <p class="text-2xl font-bold text-[#6366f1] dark:text-[#a8a4ff]">24°C</p>
                     </div>
+                <!-- Weather Page Container -->
+                {% if weather_data %}
+                    <div class="container mx-auto px-4 py-4 mb-8 mt-16 bg-white shadow-lg rounded-lg dark:bg-slate-800">
+                        <!-- Section Title -->
+                        <h1 class="text-2xl font-bold text-center font-semibold mb-8 text-gray-900 dark:text-gray-100 opacity-90">Weather Information</h1>
+                        <!-- Forecast and Weather Conditions -->
+                        <!-- Dynamic Farm Data Display -->
+                        {% for weather_data in weather_data_list %}
+                            <!-- Location Section -->
+                            <section class="mt-6">
+                                <div class="text-center hidden">
+                                    <p class="text-gray-600 dark:text-gray-400">Location:<span class="text-blue-800 font-bold dark:text-blue-500">{{ weather_data.locName }}</span></p>
+                                </div>
+                                <h3 class="text-gray-700 text-3xl decoration:underline text-center dark:text-gray-400">
+                                Location Details:
+                                </h3>
+                                <div class="block items-center justify-center ml-4 space-x-2">
+                                    <p class="text-gray-600 text-center dark:text-gray-400">
+                                        Elevation (height above sea level):
+                                        <span class="text-green-800 dark:text-greengreen-600 dark:text-green-600">{{ weather_data.weekly.elevation }} M(meters)</span>
+                                    </p>
+                                    <p class="text-gray-600 text-center dark:text-gray-400">
+                                        Timezone:
+                                        <span class="text-blue-800 font-bold underline dark:text-blue-500">{{ weather_data.weekly.timezone }} ({{
+                                        weather_data.weekly.timezone_abbreviation }})</span>
+                                    </p>
+                                    <p class="flex underline"></p>
+                                </div>
+
+                                <!-- Daily Forecast 7 Days -->
+                                <div id="dailyForecast-{{ weather_data.farmName|slugify }}" class="grid grid-cols-1 ml-2 md:grid-cols-2 lg:grid-cols-3 rounded-lg gap-2 bg-white dark:bg-gray-700/50 p-6 rounded-xl shadow-xl">
+                                    {% with weekly_data=weather_data.weekly.daily %}
+                                        {% for day in weekly_data.time %}
+                                            {% with index=forloop.counter0 %}
+                                                {% with desc=weekly_data.weathercode|get_index:index|get_desc %}
+                                                    <div class="grid gap-6 ml-2 mb-4">
+                                                        <!-- Sample Day Forecast -->
+                                                        <div class="bg-green-100 p-6 rounded-lg shadow-md transition duration-5 ease-in-out hover:scale-105 dark:bg-slate-950">
+                                                        <h2 class="text-xl font-bold mb-2 text-green-700">
+                                                            {{ day|get_day }}-{{ day }}
+                                                        </h2>
+                                                        <div class="flex items-center mb-2">
+                                                            <img src="{% static 'images/' %}{{ desc|get_icon }}" alt="Weather Icon" class="w-16 h-16"/>
+                                                            <p class="text-gray-600 ml-3 dark:text-gray-300">Condition:<span class="text-yellow-600 font-semibold">{{ desc }}</span></p>
+                                                        </div>
+                                                        <p class="text-gray-600 dark:text-gray-200">Max Temperature:<span class="text-red-600 dark:text-red-500">{{ weekly_data.temperature_2m_max|get_index:index }}°C</span></p>
+                                                        <p class="text-gray-600 dark:text-gray-200">Min Temperature:<span class="text-orange-700 dark:text-orange-500">{{ weekly_data.temperature_2m_min|get_index:index }}°C</span></p>
+                                                        {% if weekly_data.humidity %}
+                                                            <p class="text-gray-600 dark:text-gray-200">Humidity:<span class="text-green-800 dark:text-green-400">{{ weekly_data.humidity }} %</span></p>
+                                                        {% endif %}
+                                                        {% if weekly_data.wind_speed %}
+                                                            <p class="text-gray-600 dark:text-gray-200">Wind Speed:<span class="text-green-800 dark:text-green-400">{{ weekly_data.wind_speed }} km/h</span></p>
+                                                        {% endif %}
+                                                        <p class="text-gray-600 dark:text-gray-200">Precipitation:<span class="text-green-800 dark:text-green-400">{{ weekly_data.precipitation_sum|get_index:index }} mm</span></p>
+                                                        <p class="text-gray-600 dark:text-gray-200">Sunrise:<span class="text-green-800 dark:text-green-400">{{ weekly_data.sunrise|get_index:index|normal_time }}</span></p>
+                                                        <p class="text-gray-600 dark:text-gray-200">Sunset:<span class="text-green-800 dark:text-green-400">{{ weekly_data.sunset|get_index:index|normal_time }}</span></p>
+                                                        </div>
+                                                    </div>
+                                                {% endwith %}
+                                            {% endwith %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                </div>
+
+                                <!-- Hourly Forecast Section (Initially Hidden) -->
+                                <div id="hourlyForecast-{{ weather_data.farmName|slugify }}" class="flex flex-cols items-center justify-center gap-6 hidden p-4 rounded-lg dark:bg-gray-900 hidden">
+                                {% with hourly3=weather_data %}
+                                    <!-- Daily 3 HOURS Forecast Section -->
+                                    <div class="bg-green-100 p-6 rounded-lg shadow-md transition duration-5 ease-in-out hover:scale-105 dark:bg-slate-950">
+                                        <h2 class="text-xl font-bold mb-2 text-green-700">For 3 HRS</h2>
+                                        <h2 class="text-gray-600">Country:<span class="text-green-700">{{ hourly3.country|default:"Value not found" }}</span></h2>
+                                        <img src="{% static 'images/*.png' %}" class="w-16 h-16" alt="Weather Icon"/>
+                                        <h2 class="text-gray-600">Location:<span class="text-blue-600">{{ hourly3.farmName</span></h2>
+                                        <div class="flex items-center mb-2">
+                                            <p class="text-gray-600 ml-0 font-bold">Condition:<span id="cond" class="text-yellow-600 font-semibold">{{ hourly3.weather_main }}</span></p>
+                                            <p class="text-gray-600 ml-3">Description:<span class="text-yellow-600 font-semibold">{{ hourly3.weather_description }}</span></p>
+                                        </div>
+                                        <p class="text-gray-600">Temperature:<span class="text-red-600">{{ hourly3.temperature|floatformat:2 }}°C</span></p>
+                                        <p class="text-gray-600">Apparent Temperature:<span class="text-green-800">{{ hourly3.feels_like|floatformat:2 }}°C</span></p>
+                                        <p class="text-gray-600">Humidity:<span class="text-blue-600">{{ hourly3.humidity }}%</span></p>
+                                        <p class="text-gray-600">Wind Speed:<span class="text-blue-600">{{ hourly3.wind_speed }}m/s</span></p>
+                                        <p class="text-gray-600">Wind Direction:
+                                        <span class="text-green-800">{{ hourly3.wind_direction }}°</span></p>
+                                        <p class="text-gray-600">Pressure::<span class="text-blue-600">{{ hourly3.pressure }}hPa</span></p>
+                                        <p class="text-gray-600">Cloud Cover:<span class="text-blue-600">{{ hourly3.cloud_cover }}%</span></p>
+                                        <p class="text-gray-600">Sunrise: <span class="text-green-800">{{ hourly3.sunrise }}</span></p>
+                                        <p class="text-gray-600">Sunset: <span class="text-green-800">{{ hourly3.sunset }}</span></p>
+                                        <p class="text-gray-600">Rain Last Hour:<span class="text-blue-600">{{ hourly3.rain_last_hour }}mm</span></p>
+                                    </div>
+                                {% endwith %}
+                                </div>
+                        </section>
+                    {% endfor %}
                     <!-- Add more cards as needed -->
                 </div>
+                {% endif %}
             </div>
         </main>
 

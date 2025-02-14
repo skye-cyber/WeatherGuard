@@ -21,10 +21,13 @@ from .weather import main
 
 
 def get_home(request):
-    return render(request, 'index.html')
-
-
-# views.py
+    if request.user.:
+        context = get_weatherData(request)
+        if not context:
+            return render(request, 'index.html')
+        return render(request, 'index.html', context)
+    else:
+        return render(request, 'index.html')
 
 
 def register(request):
@@ -129,7 +132,8 @@ def GetLocationDetail(request, name=False, coord=False):
 
     # Fetch the user's profile
     user_profile = Profile.objects.filter(user=request.user)
-
+    for loc in user_profile:
+        print(loc.__dict__)
     if not user_profile.exists():
         return JsonResponse({'error': 'No locations found for the user'}, status=404)
 
@@ -149,17 +153,17 @@ def GetLocationDetail(request, name=False, coord=False):
     return JsonResponse(list(data), safe=False)
 
 
-def get_weather_page(request):
+def get_weatherData(request):
     # Get all locations from the database or source
     # Ensure this function returns a list of locations
-    locations = GetLocationDetail(request, locations=True)
-    farmNames = GetLocationDetail(request, names=True)
+    locations = GetLocationDetail(request, coord=True)
+    locNames = GetLocationDetail(request, name=True)
     weather_data_list = []
     error_locations = []
 
     # Fetch weather data for each location
     if locations:
-        for loc, farmName in zip(locations, farmNames):
+        for loc, locName in zip(locations, locNames):
             try:
                 # Retrieve weather data for the current location
                 weekly_data = main(loc)
@@ -177,8 +181,7 @@ def get_weather_page(request):
 
                 # Process and format weather data
                 weather_data = {
-                    "farmName": farmName,
-                    "location": hourly_data.get("name"),
+                    "locName": hourly_data.get("name"),
                     "country": hourly_data["sys"].get("country"),
                     # Convert to Celsius
                     "temperature": hourly_data["main"].get("temp") - 273.15,
@@ -212,7 +215,7 @@ def get_weather_page(request):
         }
         if error_locations and weather_data_list == []:
             return render(request, 'error.html', {"error_message": error_locations}, status=404)
-        return render(request, 'weather.html', context)
+        return context
     else:
         return render(request, 'error.html', {'error_message': 'Could not obtain Forecast: -> No Farm Locations set!'}, status=404)
 
