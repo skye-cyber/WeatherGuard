@@ -9,7 +9,7 @@ from .models import CustomUser, Location
 
 class CustomUserAdmin(BaseUserAdmin):
     list_display = ('username', 'email', 'phone',
-                    'location_names', 'location_coordinates', 'is_staff')
+                    'location_name', 'location_coordinates', 'is_staff')
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
     search_fields = ('username', 'email')
     ordering = ('username',)
@@ -22,7 +22,7 @@ class CustomUserAdmin(BaseUserAdmin):
         ('Permissions', {'fields': ('is_active', 'is_staff',
          'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
-                ('Verification', {'fields': ('email_verified', 'phone_verified', 'verification_token')}),
+        ('Verification', {'fields': ('email_verified', 'phone_verified', 'verification_token')}),
         ('Locations', {'fields': ('locations',)}),
     )
 
@@ -35,7 +35,7 @@ class CustomUserAdmin(BaseUserAdmin):
 
     def location_names(self, obj):
         return ', '.join([loc.name for loc in obj.locations.all()])
-    location_names.short_description = 'Location Names'
+    location_names.short_description = 'Location Name'
 
     def location_coordinates(self, obj):
         return ', '.join([loc.coordinates for loc in obj.locations.all()])

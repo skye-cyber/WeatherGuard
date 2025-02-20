@@ -62,6 +62,7 @@ class CustomRegistrationForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        user.is_active = False  # User is not active until verified
         location_name = self.cleaned_data.get('location_name')
         location_coordinates = self.cleaned_data.get('location_coordinates')
 
@@ -73,3 +74,8 @@ class CustomRegistrationForm(UserCreationForm):
             for loc in self.cleaned_data.get('locations', []):
                 user.locations.add(loc)
         return user
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(required=True,)
+    password = forms.CharField(widget=forms.PasswordInput)

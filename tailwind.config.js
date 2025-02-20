@@ -3,6 +3,7 @@ module.exports = {
   darkMode: 'class',
   content: [
     './weather/templates/*.html',
+    './weather/templates/registration/*.html',
     './weather/static/js/*.js',
     './weather/static/css/*.css'
   ],

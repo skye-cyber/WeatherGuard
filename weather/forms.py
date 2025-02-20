@@ -74,3 +74,8 @@ class CustomRegistrationForm(UserCreationForm):
             for loc in self.cleaned_data.get('locations', []):
                 user.locations.add(loc)
         return user
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(required=True,)
+    password = forms.CharField(widget=forms.PasswordInput, required=True,)

@@ -35,7 +35,7 @@ class CustomUserAdmin(BaseUserAdmin):
 
     def location_names(self, obj):
         return ', '.join([loc.name for loc in obj.locations.all()])
-    location_names.short_description = 'Location Names'
+    location_names.short_description = 'Location Name'
 
     def location_coordinates(self, obj):
         return ', '.join([loc.coordinates for loc in obj.locations.all()])

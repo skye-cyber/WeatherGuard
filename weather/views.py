@@ -3,31 +3,60 @@ from datetime import datetime
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.core import exceptions
 from django.core.mail import send_mail
 from django.db.models import QuerySet
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseForbidden, HttpResponseRedirect,
                          JsonResponse, StreamingHttpResponse)
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views import View
 from django_ratelimit.decorators import ratelimit
-# Create your views here.
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from twilio.rest import Client
 
 from .forms import CustomRegistrationForm
 from .models import CustomUser, Profile
 from .weather import main
+from .get_coordinates import get_latitude_longitude
 
 
+def get_login(request):
+    return render(request, 'registration/login.html')
+
+
+def get_register(request):
+    return render(request, 'registration/register.html')
+
+
+def get_verification(request):
+    render(request, "verify.html")
+
+
+@api_view(['GET'])
+def geocode_location(request):
+    location = request.GET.get('location_names')
+    print(location)
+    if not location:
+        return Response({'error': 'Location is required'}, status=400)
+    coord = get_latitude_longitude(location)
+    print(coord)
+    return coord
+
+
+@login_required
 def get_home(request):
-    if request.user.location:
-        context = get_weatherData(request)
-        if not context:
-            return render(request, 'index.html')
-        return render(request, 'index.html', context)
-    else:
+    context = get_weatherData(request)
+    if not context:
         return render(request, 'index.html')
+    elif isinstance(context, str):
+        print("context", context)
+        return render(request, 'index.html', {"error_messages": context})
+    return render(request, 'index.html', context)
 
 
 def register(request):
@@ -38,10 +67,11 @@ def register(request):
             # Send verification email
             verification_url = request.build_absolute_uri(
                 f'/verify-email/{user.verification_token}/')
+            print(verification_url)
             send_mail(
                 'Verify your email',
                 f'Please click the link to verify your email: {verification_url}',
-                'from@example.com',
+                'skye17@gmail.com',
                 [user.email],
                 fail_silently=False,
             )
@@ -55,9 +85,6 @@ def register(request):
 
 def verification_pending(request):
     return render(request, 'registration/verification_pending.html')
-
-
-# views.py (continued)
 
 
 def verify_email(request, token):
@@ -75,11 +102,10 @@ def verify_email(request, token):
         return redirect('login')
 
 
-@ratelimit(key='ip', rate='5/m', method='ALL', block=True)
+# @ratelimit(key='ip', rate='5/m', method='ALL', block=True)
 def user_login(request):
-
-    if getattr(request, 'limited', False):
-        return HttpResponseForbidden('Rate limit exceeded')
+    """if getattr(request, 'limited', False):
+        return HttpResponseForbidden('Rate limit exceeded')"""
 
     if request.method == "POST":
         # Instantiate the form with submitted data
@@ -96,7 +122,7 @@ def user_login(request):
                 user = CustomUser.objects.get(username=cd["username"])
             except CustomUser.DoesNotExist:
                 messages.error(request, 'User does not exist.')
-                return render(request, 'home')
+                return render(request, 'registration/login.html', {'form': form})
 
             # User exists
             if user is not None:
@@ -107,9 +133,6 @@ def user_login(request):
 
                 else:
                     messages.error(request, 'Account is disabled❌')
-                    # HttpResponse('<script>alert("Account is disabled❌")</script>')
-
-            # User exists
             else:
                 messages.error(request, 'Incorrect login credentials')
         else:
@@ -119,7 +142,15 @@ def user_login(request):
     else:
         # form = LoginForm()
         form = AuthenticationForm()
-    return render(request, 'index.html', {'form': form})
+    print(form.errors)
+    return render(request, 'registration/login.html', {'form': form})
+
+
+@login_required
+def user_logout(request):
+    logout(request)
+    messages.info(request, "Logged out successfully!")
+    return HttpResponseRedirect(reverse('userlogin'))
 
 
 def GetLocationDetail(request, name=False, coord=False):
@@ -132,8 +163,8 @@ def GetLocationDetail(request, name=False, coord=False):
 
     # Fetch the user's profile
     user_profile = Profile.objects.filter(user=request.user)
-    for loc in user_profile:
-        print(loc.__dict__)
+    """for loc in user_profile:
+        print(loc.__dict__)"""
     if not user_profile.exists():
         return JsonResponse({'error': 'No locations found for the user'}, status=404)
 
@@ -144,11 +175,13 @@ def GetLocationDetail(request, name=False, coord=False):
             loc_data.pop('_state', None)
         return JsonResponse(all_data, safe=False)
 
-    # Determine the field to retrieve based on the flag
-    field = 'location_coordinates' if coord else 'location_name'
-
-    # Retrieve the specific field data
-    data = user_profile.values_list(field, flat=True)
+    try:
+        # Determine the field to retrieve based on the flag
+        field = 'location_coordinates' if coord else 'location_name'
+        # Retrieve the specific field data
+        data = user_profile.values_list(field, flat=True)
+    except exceptions.FieldError:
+        return None
 
     return JsonResponse(list(data), safe=False)
 
@@ -214,10 +247,12 @@ def get_weatherData(request):
             "weather_data_list": weather_data_list
         }
         if error_locations and weather_data_list == []:
-            return render(request, 'error.html', {"error_message": error_locations}, status=404)
+            # render(request, 'index.html', {"error_message": error_locations}, status=404)
+            return "error obtaining weather data!"
         return context
     else:
-        return render(request, 'error.html', {'error_message': 'Could not obtain Forecast: -> No Farm Locations set!'}, status=404)
+        # render(request, 'index.html', {'error_message': 'User has not set locations!'}, status=404)
+        return "User has not set locations!"
 
 
 def send_sms(message):

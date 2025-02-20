@@ -22,11 +22,16 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", views.get_home, name="home"),
+    path("", views.get_login, name="login"),
+    path("user_login/", views.user_login, name="userlogin"),
+    path("get_onboard/", views.get_register, name="get_onboard"),
+    path("onboard/", views.register, name="onboard"),
+    path("home/", views.get_home, name="home"),
+    path("logout/", views.get_login, name="logout"),
+    path('geocode/', views.geocode_location, name='geocode_location'),
+    path("account_verification/", views.get_verification, name="verification_pending"),
     path('weather/', views.WeatherView.as_view(), name='weather'),
     path('weather-notification/', views.WeatherNotificationView.as_view(), name='weather-notification'),
-    path("onboard", views.register, name="onboard"),
-
 ]
 
 
