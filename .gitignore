@@ -1,0 +1,11 @@
+# Ignore backup files
+*~
+# Ignore Python bytecode
+*.pyc
+__pycache__/
+
+# Ignore Django settings local changes
+*.local
+
+# Ignore virtual environment
+venv/
