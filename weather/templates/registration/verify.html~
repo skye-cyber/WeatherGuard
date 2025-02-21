@@ -6,7 +6,7 @@
     <title>Await Email Verification</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <script src="{% static 'js/verify.js' %}"></script>
+    <script src="{% static 'js/register.js' %}"></script>
 </head>
 <body class="bg-gradient-to-r from-blue-500 to-sky-500 min-h-screen flex items-center justify-center">
     <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">

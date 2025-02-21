@@ -32,6 +32,17 @@ class CustomRegistrationForm(UserCreationForm):
             'invalid': 'Please enter a valid city or location.'
         }
     )
+
+    password1 = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=True
+    )
+
+    password2 = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=True
+    )
+
     location_coordinates = forms.CharField(
         widget=forms.HiddenInput(),
         required=False

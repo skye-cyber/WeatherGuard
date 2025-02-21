@@ -1,21 +1,21 @@
+import uuid
+
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser, Group, Permission, User
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-import uuid
-
-# Create your models here.
 
 
 class CustomUser(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
     email_verified = models.BooleanField(default=False)
     phone_verified = models.BooleanField(default=False)
-    verification_token = models.UUIDField(default=uuid.uuid4, null=True, blank=True)
+    verification_token = models.UUIDField(
+        default=uuid.uuid4, null=True, blank=True)
     groups = models.ManyToManyField(
         Group,
-        related_name='custom_user_set',  # Specify a unique related_name
+        related_name='customuser_set',  # Renamed to avoid conflict
         blank=True,
         help_text='The groups this user belongs to.',
         verbose_name='groups',
@@ -23,10 +23,16 @@ class CustomUser(AbstractUser):
 
     user_permissions = models.ManyToManyField(
         Permission,
-        related_name='custom_user_set',  # Specify a unique related_name
+        related_name='customuser_set',  # Renamed to avoid conflict
         blank=True,
         help_text='Specific permissions for this user.',
         verbose_name='user permissions',
+    )
+    user_locations = models.ManyToManyField(  # Renamed to avoid conflict
+        'Location',
+        related_name='users',  # Specify a unique related_name
+        blank=True,
+        verbose_name='locations',
     )
 
     def is_fully_verified(self):
@@ -64,7 +70,8 @@ def save_user_profile(sender, instance, **kwargs):
 
 class Location(models.Model):
     user = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name='locations', default=1)
+        # Renamed to avoid conflict
+        CustomUser, on_delete=models.CASCADE, related_name='location_set', default=1)
     name = models.CharField(max_length=255)
     coordinates = models.CharField(max_length=255)
 

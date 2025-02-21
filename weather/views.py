@@ -2,9 +2,11 @@ from datetime import datetime
 
 import requests
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.shortcuts import get_current_site
 from django.core import exceptions
 from django.core.mail import send_mail
 from django.db.models import QuerySet
@@ -13,16 +15,24 @@ from django.http import (HttpResponse, HttpResponseBadRequest,
                          JsonResponse, StreamingHttpResponse)
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views import View
 from django_ratelimit.decorators import ratelimit
+from rest_framework import serializers, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from twilio.rest import Client
-
 from .forms import CustomRegistrationForm
-from .models import CustomUser, Profile
-from .weather import main
 from .get_coordinates import get_latitude_longitude
+from .models import CustomUser, Profile
+from .serializers import CustomUserSerializer
+from .weather import main
+import logging
+
+User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 def get_login(request):
@@ -39,13 +49,18 @@ def get_verification(request):
 
 @api_view(['GET'])
 def geocode_location(request):
-    location = request.GET.get('location_names')
-    print(location)
+    location = request.GET.get('loc_name')
     if not location:
         return Response({'error': 'Location is required'}, status=400)
+
     coord = get_latitude_longitude(location)
-    print(coord)
-    return coord
+    if not coord:
+        return Response({'error': 'Coordinates not found'}, status=404)
+
+    # Convert the tuple to a list
+    coord_list = list(coord)
+
+    return Response({'coordinates': coord_list})
 
 
 @login_required
@@ -59,47 +74,75 @@ def get_home(request):
     return render(request, 'index.html', context)
 
 
-def register(request):
-    if request.method == 'POST':
-        form = CustomRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            # Send verification email
-            verification_url = request.build_absolute_uri(
-                f'/verify-email/{user.verification_token}/')
-            print(verification_url)
-            send_mail(
-                'Verify your email',
-                f'Please click the link to verify your email: {verification_url}',
-                'skye17@gmail.com',
-                [user.email],
-                fail_silently=False,
-            )
-            messages.success(
-                request, 'Registration successful! Please verify your email to activate your account.')
-            return redirect('verification_pending')
-    else:
-        form = CustomRegistrationForm()
-    return render(request, 'registration/register.html', {'form': form})
+def send_email(user, request):
+    # Generate verification token and URL
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    verification_url = reverse('verify-email', kwargs={'uidb64': uid, 'token': token})
+    verification_url = f"{get_current_site(request)}{verification_url}"
+    logger.info(f"Verification URL: {verification_url}")
+
+    send_mail(
+        'Verify your email',
+        f'Please click the link to verify your email: {verification_url}',
+        'skye17@gmail.com',
+        [user.email],
+        fail_silently=False,
+    )
+
+
+class RegisterAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        logger.info(f"Received POST request with data: {request.data}")
+        serializer = CustomUserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            send_email(user, request)  # Call the send_email function
+            messages.success(request, 'Registration successful! Please verify your email to activate your account.')
+            return redirect('await-verification')
+        logger.error(f"Serializer errors: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResendEmailAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        if not email:
+            logger.error("Email is required for resending verification.")
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            logger.error(f"No user found with email: {email}")
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        send_email(user, request)  # Reuse the send_email function
+        messages.success(request, 'Verification email resent successfully.')
+        return JsonResponse({'message': 'Verification email resent successfully.'}, status=status.HTTP_200_OK)
 
 
 def verification_pending(request):
-    return render(request, 'registration/verification_pending.html')
+    return render(request, 'registration/verify.html')
 
 
-def verify_email(request, token):
+def verify_email(request, uidb64, token):
     try:
-        user = CustomUser.objects.get(verification_token=token)
-        user.is_active = True  # Activate the user account
-        user.email_verified = True  # Mark the email as verified
-        user.verification_token = None  # Clear the token after verification
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = get_user_model().objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.email_verified = True
         user.save()
         messages.success(
-            request, 'Email verified successfully! You can now log in.')
-        return redirect('login')  # Redirect to login page
-    except CustomUser.DoesNotExist:
-        messages.error(request, 'Invalid verification link.')
+            request, 'Your email has been verified. You can now log in.')
         return redirect('login')
+    else:
+        messages.error(request, 'Verification link is invalid.')
+        return redirect('onboard')
 
 
 # @ratelimit(key='ip', rate='5/m', method='ALL', block=True)
@@ -129,7 +172,9 @@ def user_login(request):
                 if user.is_active:
                     login(request, user)
                     # messages.success(request, f'Welcome, {cd["username"]}. You are now logged in.')
-                    return redirect('home')
+                    if user.email_verified or user.phone_verified:
+                        return redirect('home')
+                    return redirect('await-verification')
 
                 else:
                     messages.error(request, 'Account is disabled❌')

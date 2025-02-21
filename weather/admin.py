@@ -14,7 +14,7 @@ class CustomUserAdmin(BaseUserAdmin):
     search_fields = ('username', 'email')
     ordering = ('username',)
     readonly_fields = ('date_joined', 'last_login')
-    filter_horizontal = ('groups', 'user_permissions',)
+    filter_horizontal = ('groups', 'user_permissions', 'user_locations')
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
@@ -22,30 +22,32 @@ class CustomUserAdmin(BaseUserAdmin):
         ('Permissions', {'fields': ('is_active', 'is_staff',
          'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
-        ('Verification', {'fields': ('email_verified', 'phone_verified', 'verification_token')}),
-        ('Locations', {'fields': ('locations',)}),
+        ('Verification', {'fields': ('email_verified',
+         'phone_verified', 'verification_token')}),
+        # Updated to use the new field name
+        ('Locations', {'fields': ('user_locations',)}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'phone', 'password1', 'password2', 'locations')}
+            # Updated to use the new field name
+            'fields': ('username', 'email', 'phone', 'password1', 'password2', 'user_locations')}
          ),
     )
 
     def location_names(self, obj):
-        return ', '.join([loc.name for loc in obj.locations.all()])
+        return ', '.join([loc.name for loc in obj.user_locations.all()])
     location_names.short_description = 'Location Name'
 
     def location_coordinates(self, obj):
-        return ', '.join([loc.coordinates for loc in obj.locations.all()])
+        return ', '.join([loc.coordinates for loc in obj.user_locations.all()])
     location_coordinates.short_description = 'Location Coordinates'
 
 # Location Admin
 
 
 class LocationAdmin(admin.ModelAdmin):
-    form = CustomRegistrationForm
     list_display = ('name', 'coordinates', 'user_names')
     list_filter = ('user__username',)  # Filter by user's username
     search_fields = ('name', 'coordinates', 'user__username')
@@ -62,6 +64,7 @@ class LocationAdmin(admin.ModelAdmin):
     )
 
     def user_names(self, obj):
+        # Corrected to use the related_name 'users'
         return ', '.join([user.username for user in obj.users.all()])
     user_names.admin_order_field = 'user__username'  # Allows column order sorting
     user_names.short_description = 'Users'  # Renames column head
