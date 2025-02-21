@@ -142,3 +142,10 @@ EMAIL_USE_TLS = True  # Set to True for port 587, False for port 465
 # EMAIL_USE_SSL = False  # Set to True for port 465, False for port 587
 EMAIL_HOST_USER = 'swskye17@gmail.com'
 EMAIL_HOST_PASSWORD = ''
+
+
+# Twilio config
+TWILIO_ACCOUNT_SID = ''
+TWILIO_AUTH_TOKEN = ''
+TWILIO_PHONE_NUMBER = '+'
+

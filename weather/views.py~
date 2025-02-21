@@ -24,13 +24,16 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from twilio.rest import Client
-from django.contrib.auth import get_user_model
 from .forms import CustomRegistrationForm
 from .get_coordinates import get_latitude_longitude
 from .models import CustomUser, Profile
 from .serializers import CustomUserSerializer
 from .weather import main
 import logging
+
+import random
+from django.conf import settings
+
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -73,6 +76,37 @@ def get_home(request):
         print("context", context)
         return render(request, 'index.html', {"error_messages": context})
     return render(request, 'index.html', context)
+
+
+class SendSMSVerificationCodeView(APIView):
+    def post(self, request, *args, **kwargs):
+        phone_number = request.data.get('phone_number')
+        if not phone_number:
+            logger.error("Phone number is required for sending SMS verification code.")
+            return Response({'error': 'Phone number is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate a 6-digit verification code
+        verification_code = str(random.randint(100000, 999999))
+        logger.info(f"Generated verification code: {verification_code}")
+
+        # Send the verification code via SMS
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        try:
+            message = client.messages.create(
+                body=f'Your verification code is: {verification_code}',
+                from_=settings.TWILIO_PHONE_NUMBER,
+                to=phone_number
+            )
+            logger.info(f"SMS sent successfully. Message SID: {message.sid}")
+        except Exception as e:
+            logger.error(f"Failed to send SMS: {e}")
+            return Response({'error': 'Failed to send verification code'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Save the verification code in the session or database for later verification
+        request.session['verification_code'] = verification_code
+        logger.info(f"Verification code saved in session: {verification_code}")
+
+        return Response({'message': 'Verification code sent successfully'}, status=status.HTTP_200_OK)
 
 
 def send_email(user, request):
