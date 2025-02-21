@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify SMS Code</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body class="bg-gradient-to-r from-blue-500 to-sky-500 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
+        <h1 class="text-2xl font-bold text-center text-gray-800">
+            Verify Your SMS Code
+        </h1>
+        <p class="text-center text-gray-600">
+            Please enter the verification code sent to your mobile number.
+        </p>
+        <form id="verificationForm" class="space-y-4">
+            {% csrf_token %}
+            <div class="relative z-0 w-full mb-6 group">
+                <input type="number" name="verification_code" id="verification_code" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " required />
+                <label for="verification_code" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Verification Code</label>
+            </div>
+            <div class="flex justify-center">
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Verify
+                </button>
+            </div>
+            <div id="response" class="text-center text-gray-600 hidden">
+                <p id="responseMessage"></p>
+            </div>
+        </form>
+    </div>
+
+    <!-- Processing Modal -->
+    <div id="processingModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="relative bg-white p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
+            <button id="closeModal" class="hidden absolute top-2 right-2 text-cyan-800 dark:text-gray-500 hover:text-[#0b03ff] dark:hover:text-gray-400 hover:rotate-90 transition duration-300" onclick="document.getElementById('processingModal').classList.add('hidden');">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="flex items-center justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-500"></div>
+            </div>
+            <p class="text-center text-green-600">
+                Verifying...
+            </p>
+        </div>
+    </div>
+    <style>
+        /* Custom CSS to remove spin buttons */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* For Firefox */
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</body>
+</html>

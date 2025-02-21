@@ -7,7 +7,9 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <script src="{% static 'js/register.js' %}"></script>
-    <!--<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>-->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 <body class="bg-gradient-to-r from-blue-500 to-sky-500 min-h-screen flex items-center justify-center text-gray-700">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mt-6 mb-6">
@@ -43,12 +45,24 @@
                 {% endfor %}
             </div>
             <div class="form-group">
-                <label for="phone" class="block text-sm text-gray-700 dark:text-gray-300 font-medium">Phone Number</label>
-                <input type="tel" id="phone" name="phone" value="{{ form.phone.value|default:'' }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                {% for error in form.errors.phone %}
-                <p class="text-sm text-red-500">{{ error }}</p>
-                {% endfor %}
+                <div class="dropdown-container relative w-72">
+                    <select id="country-code" name="country-code" class="hidden flex mt-5 p-2 w-20 max-w-20 border rounded border-gray-300 dark:border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-none z-30" aria-hidden="true" style="min-height: 38px;">
+                    </select>
+                    <div id="selected-code" name="selected-code" class="absolute flex min-h-[68%]  border border-gray-300 border-r-none mt-5 ml-1/2 p-2 w-20 max-w-20 rounded rounded focus:outline-none focus:ring-2 focus:ring-none z-30 rounded bg-blue-50 cursor-pointer">
+                        <span id="selected-text"></span>
+                        <img id="selected-flag" src="" alt="Flag" class="w-5 h-5 mr-3 hidden" />
+                    </div>
+                    <section id="ParentCustom" class="absolute mt-8 rounded-md overflow-y-auto bg-white border-2 border-gray-300 shadow-lg h-64 z-50 hidden">
+                        <!-- Custom dropdown options will be dynamically added here -->
+                    </section>
+                    <label for="phone" class="block text-sm text-gray-700 dark:text-gray-300 font-medium">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" value="{{ form.phone.value|default:'' }}" class="relative w-full pl-20 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    {% for error in form.errors.phone %}
+                    <p class="text-sm text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
             </div>
+
             <div class="form-group">
                 <label for="location_name" class="block text-sm text-gray-700 dark:text-gray-300 font-medium">Location</label>
                 <input type="text" id="location_name" name="location_name" value="{{ form.location_name.value|default:'' }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded bg-gray-100 dark:bg-gray-800 focus:outline-none" value="Fetching location...">
@@ -56,7 +70,7 @@
                 <p class="text-sm text-red-500">{{ error }}</p>
                 {% endfor %}
             </div>
-            <div class="form-group">
+            <div class="hidden form-group">
                 <label for="location_coordinates" class="block text-sm text-gray-700 dark:text-gray-300 font-medium">Coordinates</label>
                 <input type="text" id="location_coordinates" name="location_coordinates" value="{{ form.location_coordinates.value|default:'' }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded bg-gray-100 dark:bg-gray-800 focus:outline-none">
                 {% for error in form.errors.location_coordinates %}

@@ -8,7 +8,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core import exceptions
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.db.models import QuerySet
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseForbidden, HttpResponseRedirect,
@@ -67,7 +67,6 @@ def geocode_location(request):
     return Response({'coordinates': coord_list})
 
 
-
 @login_required
 def get_home(request):
     context = get_weatherData(request)
@@ -82,6 +81,7 @@ def get_home(request):
 class SendSMSVerificationCodeView(APIView):
     def post(self, request, *args, **kwargs):
         phone_number = request.data.get('phone_number')
+        print(phone_number)
         if not phone_number:
             logger.error("Phone number is required for sending SMS verification code.")
             return Response({'error': 'Phone number is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -93,12 +93,20 @@ class SendSMSVerificationCodeView(APIView):
         # Send the verification code via SMS
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         try:
-            message = client.messages.create(
-                body=f'Your verification code is: {verification_code}',
+            """message = client.messages.create(
+                body=f'Your weatherguard verification code is: {verification_code}',
                 from_=settings.TWILIO_PHONE_NUMBER,
                 to=phone_number
-            )
-            logger.info(f"SMS sent successfully. Message SID: {message.sid}")
+            )"""
+            verification = client.verify.v2.services(
+                "VAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").verifications.create(
+                channel="sms",
+                custom_friendly_name='WeatherGuard',
+                custom_message=f'Your weatherguard verification code is: {verification_code}',
+                # from_=settings.TWILIO_PHONE_NUMBER,
+                to=phone_number)
+
+            logger.info(f"SMS sent successfully. Message SID: {verification.status}")
         except Exception as e:
             logger.error(f"Failed to send SMS: {e}")
             return Response({'error': 'Failed to send verification code'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -116,15 +124,49 @@ def send_email(user, request):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     verification_url = reverse('verify-email', kwargs={'uidb64': uid, 'token': token})
     verification_url = f"{get_current_site(request)}{verification_url}"
+    verification_url = verification_url if verification_url.startswith('https') else f'http://{verification_url}'
     logger.info(f"Verification URL: {verification_url}")
 
-    send_mail(
-        'Verify your email',
-        f'Please click the link to verify your email: {verification_url}',
-        'skye17@gmail.com',
-        [user.email],
-        fail_silently=False,
-    )
+    subject = 'Verify your email'
+    html_message = f"""
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; }}
+            .container {{ max-width: 600px; margin: auto; padding: 20px; }}
+            .header {{ text-align: center; }}
+            .message {{ margin-bottom: 20px; }}
+            .button-container {{ text-align: center; }}
+            .button {{ background-color: #007BFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }}
+            .footer {{ text-align: center; color: #777; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Verify your email</h1>
+            </div>
+            <div class="message">
+                <p>Dear {user.username},</p>
+                <p>Thank you for registering! To activate your account, please click the button below:</p>
+            </div>
+            <div class="button-container">
+                <a href="{verification_url}" target="_blank" class="button">Verify Email</a>
+            </div>
+            <p>If that does not work click: <a href="{verification_url}">{verification_url}</a></p>
+            <div class="footer">
+                <p>If you did not make this request, please ignore this email.</p>
+                <p>Best regards,<br>The skye-cyber Team</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    from_email = 'skye17@gmail.com'
+    recipient_list = [user.email]
+    email = EmailMessage(subject, html_message, from_email, recipient_list)
+    email.content_subtype = "html"  # this is required because the default is text/plain
+    email.send(fail_silently=False)
 
 
 class RegisterAPIView(APIView):
@@ -142,7 +184,8 @@ class RegisterAPIView(APIView):
 
 class ResendEmailAPIView(APIView):
     def post(self, request, *args, **kwargs):
-        email = request.data.get('email')
+        email = request.data.get('email')  # if request.data.get('email') else user.email
+        print(email)
         if not email:
             logger.error("Email is required for resending verification.")
             return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -159,7 +202,42 @@ class ResendEmailAPIView(APIView):
 
 
 def verification_pending(request):
-    return render(request, 'registration/verify.html')
+    if request.method == 'POST':
+        # Handle the form submission to send the SMS verification code
+        phone_number = request.POST.get('phone_number')
+        if not phone_number:
+            logger.error("Phone number is required for sending SMS verification code.")
+            return render(request, 'egistration/verify.html', {'error': 'Phone number is required'})
+
+        # Make a POST request to the SendSMSVerificationCodeView
+        from rest_framework.test import APIRequestFactory
+        factory = APIRequestFactory()
+        request = factory.post('/send-sms-verification-code/', {'phone_number': phone_number})
+        response = SendSMSVerificationCodeView.as_view()(request)
+
+        if response.status_code == 200:
+            return render(request, 'registration/verify_pending.html')
+        else:
+            return render(request, 'registration/login.html', {'error': response.data.get('error')})
+
+    # If GET request, try to use the user's phone number (if logged in)
+    phone_number = request.user.phone if request.user.is_authenticated else None
+    print(phone_number)
+    print(request.user)
+    if phone_number:
+        print("Got GET request")
+        # Make a POST request to the SendSMSVerificationCodeView
+        from rest_framework.test import APIRequestFactory
+        factory = APIRequestFactory()
+        request = factory.post('/send-sms-verification-code/', {'phone_number': phone_number})
+        response = SendSMSVerificationCodeView.as_view()(request)
+
+        if response.status_code == 200:
+            return render(request, 'registration/verify_phone.html')
+        else:
+            return render(request, 'registration/login.html', {'error': response.data.get('error')})
+    else:
+        return redirect('login')
 
 
 def verify_email(request, uidb64, token):
@@ -179,6 +257,34 @@ def verify_email(request, uidb64, token):
     else:
         messages.error(request, 'Verification link is invalid.')
         return redirect('onboard')
+
+
+class VerifySMSView(APIView):
+    def post(self, request, *args, **kwargs):
+        entered_code = request.data.get('verification_code')
+        expected_code = request.session.get('verification_code')
+
+        if not entered_code:
+            logger.error("Verification code is required.")
+            return Response({'error': 'Verification code is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not expected_code:
+            logger.error("No verification code found in session.")
+            return Response({'error': 'No verification code found in session'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if entered_code == expected_code:
+            # Verification successful
+            request.session.pop('verification_code', None)  # Remove the verification code from the session
+            logger.info("Verification successful.")
+            return Response({'message': 'Verification successful'}, status=status.HTTP_200_OK)
+        else:
+            # Verification failed
+            logger.error("Incorrect verification code.")
+            return Response({'error': 'Incorrect verification code'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def verification_form(request):
+    return render(request, 'registration/verify_phone.html')
 
 
 # @ratelimit(key='ip', rate='5/m', method='ALL', block=True)
@@ -210,7 +316,8 @@ def user_login(request):
                     # messages.success(request, f'Welcome, {cd["username"]}. You are now logged in.')
                     if user.email_verified or user.phone_verified:
                         return redirect('home')
-                    return redirect('await-verification')
+                    else:
+                        return redirect('await-verification')
 
                 else:
                     messages.error(request, 'Account is disabled❌')
@@ -223,7 +330,6 @@ def user_login(request):
     else:
         # form = LoginForm()
         form = AuthenticationForm()
-    print(form.errors)
     return render(request, 'registration/login.html', {'form': form})
 
 
