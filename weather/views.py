@@ -67,6 +67,7 @@ def geocode_location(request):
     return Response({'coordinates': coord_list})
 
 
+
 @login_required
 def get_home(request):
     context = get_weatherData(request)
