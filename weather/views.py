@@ -21,6 +21,7 @@ from django.views import View
 from django_ratelimit.decorators import ratelimit
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from twilio.rest import Client
@@ -48,7 +49,7 @@ def get_register(request):
 
 
 def get_verification(request):
-    render(request, "verify.html")
+    return render(request, "registration/verify.html")
 
 
 @api_view(['GET'])
@@ -153,7 +154,7 @@ def send_email(user, request):
             <div class="button-container">
                 <a href="{verification_url}" target="_blank" class="button">Verify Email</a>
             </div>
-            <p>If that does not work click: <a href="{verification_url}">{verification_url}</a></p>
+            <p>Alternatively click: <a href="{verification_url}">{verification_url}</a></p>
             <div class="footer">
                 <p>If you did not make this request, please ignore this email.</p>
                 <p>Best regards,<br>The skye-cyber Team</p>
@@ -172,14 +173,31 @@ def send_email(user, request):
 class RegisterAPIView(APIView):
     def post(self, request, *args, **kwargs):
         logger.info(f"Received POST request with data: {request.data}")
-        serializer = CustomUserSerializer(data=request.data)
+
+        # Extract location data from request
+        location_name = request.data.get('location_name')
+        location_coordinates = request.data.get('location_coordinates')
+
+        # Prepare data for serializer
+        data = {
+            'username': request.data.get('username'),
+            'email': request.data.get('email'),
+            'phone': request.data.get('phone'),
+            'password1': request.data.get('password1'),
+            'password2': request.data.get('password2'),
+            'locations': [
+                {'name': location_name, 'coordinates': location_coordinates}
+            ] if location_name and location_coordinates else []
+        }
+
+        serializer = CustomUserSerializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
             send_email(user, request)  # Call the send_email function
             messages.success(request, 'Registration successful! Please verify your email to activate your account.')
-            return redirect('await-verification')
+            return redirect('verification_page')
         logger.error(f"Serializer errors: {serializer.errors}")
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 
 class ResendEmailAPIView(APIView):

@@ -30,6 +30,7 @@ urlpatterns = [
     path("logout/", views.get_login, name="logout"),
     path('geocode/', views.geocode_location, name='geocode_location'),
     path('await-verification/', views.verification_pending, name='await-verification'),
+    path('verification_page/', views.get_verification, name='verification_page'),
     path("resend-email/", views.ResendEmailAPIView.as_view(), name="resend-email"),
     path('send-sms-verification-code/', views.SendSMSVerificationCodeView.as_view(), name='send-sms-verification-code'),
     path('verify-sms/', views.VerifySMSView.as_view(), name='verify-sms'),

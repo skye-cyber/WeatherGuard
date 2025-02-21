@@ -18,8 +18,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'phone',
-                  'password1', 'password2', 'locations']
+        fields = ['username', 'email', 'phone', 'password1', 'password2', 'locations']
         extra_kwargs = {
             'password1': {'write_only': True},
             'password2': {'write_only': True}
@@ -29,18 +28,21 @@ class CustomUserSerializer(serializers.ModelSerializer):
         password1 = data.get('password1')
         password2 = data.get('password2')
         if password1 and password2 and password1 != password2:
-            raise ValidationError({'password2': 'Passwords must match.'})
+            raise serializers.ValidationError({'password2': 'Passwords must match.'})
         return data
 
     def create(self, validated_data):
         password1 = validated_data.pop('password1')
         validated_data.pop('password2', None)  # Remove password2 if present
         locations_data = validated_data.pop('locations', [])
-        user = CustomUser.objects.create_user(
-            password=password1, **validated_data)
+
+        user = CustomUser.objects.create_user(password=password1, **validated_data)
+        user.save()  # Save the user instance first
+
         for location_data in locations_data:
             location, created = Location.objects.get_or_create(
-                name=location_data['name'], coordinates=location_data['coordinates'], user=user
+                name=location_data['name'], coordinates=location_data['coordinates']
             )
-            user.user_locations.add(location)
+            user.user_locations.add(location)  # Add the location to the user's user_locations
+
         return user

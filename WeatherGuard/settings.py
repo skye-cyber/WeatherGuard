@@ -140,7 +140,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587  # Commonly used ports are 587 (TLS) or 465 (SSL)
 EMAIL_USE_TLS = True  # Set to True for port 587, False for port 465
 # EMAIL_USE_SSL = False  # Set to True for port 465, False for port 587
-EMAIL_HOST_USER = '.com'
+EMAIL_HOST_USER = 'swskye17@gmail.com'
 EMAIL_HOST_PASSWORD = ''
 
 
