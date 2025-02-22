@@ -1,6 +1,9 @@
+import logging
+import random
 from datetime import datetime
 
 import requests
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
@@ -8,7 +11,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core import exceptions
-from django.core.mail import send_mail, EmailMessage
+from django.core.mail import EmailMessage, send_mail
 from django.db.models import QuerySet
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseForbidden, HttpResponseRedirect,
@@ -21,20 +24,17 @@ from django.views import View
 from django_ratelimit.decorators import ratelimit
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.response import Response
+from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from twilio.rest import Client
+
 from .forms import CustomRegistrationForm
 from .get_coordinates import get_latitude_longitude
 from .models import CustomUser, Profile
 from .serializers import CustomUserSerializer
 from .weather import main
-import logging
-
-import random
-from django.conf import settings
-
+from .tests import simulate
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -70,12 +70,14 @@ def geocode_location(request):
 
 @login_required
 def get_home(request):
-    context = get_weatherData(request)
+    content = simulate()  # get_weatherData(request)
+    context = {"weather_data_dict": content}
     if not context:
         return render(request, 'index.html')
     elif isinstance(context, str):
         print("context", context)
         return render(request, 'index.html', {"error_messages": context})
+    print(context)
     return render(request, 'index.html', context)
 
 
@@ -84,7 +86,8 @@ class SendSMSVerificationCodeView(APIView):
         phone_number = request.data.get('phone_number')
         print(phone_number)
         if not phone_number:
-            logger.error("Phone number is required for sending SMS verification code.")
+            logger.error(
+                "Phone number is required for sending SMS verification code.")
             return Response({'error': 'Phone number is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Generate a 6-digit verification code
@@ -92,7 +95,8 @@ class SendSMSVerificationCodeView(APIView):
         logger.info(f"Generated verification code: {verification_code}")
 
         # Send the verification code via SMS
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        client = Client(settings.TWILIO_ACCOUNT_SID,
+                        settings.TWILIO_AUTH_TOKEN)
         try:
             """message = client.messages.create(
                 body=f'Your weatherguard verification code is: {verification_code}',
@@ -107,7 +111,8 @@ class SendSMSVerificationCodeView(APIView):
                 # from_=settings.TWILIO_PHONE_NUMBER,
                 to=phone_number)
 
-            logger.info(f"SMS sent successfully. Message SID: {verification.status}")
+            logger.info(
+                f"SMS sent successfully. Message SID: {verification.status}")
         except Exception as e:
             logger.error(f"Failed to send SMS: {e}")
             return Response({'error': 'Failed to send verification code'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -123,9 +128,11 @@ def send_email(user, request):
     # Generate verification token and URL
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
-    verification_url = reverse('verify-email', kwargs={'uidb64': uid, 'token': token})
+    verification_url = reverse(
+        'verify-email', kwargs={'uidb64': uid, 'token': token})
     verification_url = f"{get_current_site(request)}{verification_url}"
-    verification_url = verification_url if verification_url.startswith('https') else f'http://{verification_url}'
+    verification_url = verification_url if verification_url.startswith(
+        'https') else f'http://{verification_url}'
     logger.info(f"Verification URL: {verification_url}")
 
     subject = 'Verify your email'
@@ -194,7 +201,8 @@ class RegisterAPIView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             send_email(user, request)  # Call the send_email function
-            messages.success(request, 'Registration successful! Please verify your email to activate your account.')
+            messages.success(
+                request, 'Registration successful! Please verify your email to activate your account.')
             return redirect('verification_page')
         logger.error(f"Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
@@ -202,7 +210,8 @@ class RegisterAPIView(APIView):
 
 class ResendEmailAPIView(APIView):
     def post(self, request, *args, **kwargs):
-        email = request.data.get('email')  # if request.data.get('email') else user.email
+        # if request.data.get('email') else user.email
+        email = request.data.get('email')
         print(email)
         if not email:
             logger.error("Email is required for resending verification.")
@@ -224,13 +233,15 @@ def verification_pending(request):
         # Handle the form submission to send the SMS verification code
         phone_number = request.POST.get('phone_number')
         if not phone_number:
-            logger.error("Phone number is required for sending SMS verification code.")
+            logger.error(
+                "Phone number is required for sending SMS verification code.")
             return render(request, 'egistration/verify.html', {'error': 'Phone number is required'})
 
         # Make a POST request to the SendSMSVerificationCodeView
         from rest_framework.test import APIRequestFactory
         factory = APIRequestFactory()
-        request = factory.post('/send-sms-verification-code/', {'phone_number': phone_number})
+        request = factory.post(
+            '/send-sms-verification-code/', {'phone_number': phone_number})
         response = SendSMSVerificationCodeView.as_view()(request)
 
         if response.status_code == 200:
@@ -247,7 +258,8 @@ def verification_pending(request):
         # Make a POST request to the SendSMSVerificationCodeView
         from rest_framework.test import APIRequestFactory
         factory = APIRequestFactory()
-        request = factory.post('/send-sms-verification-code/', {'phone_number': phone_number})
+        request = factory.post(
+            '/send-sms-verification-code/', {'phone_number': phone_number})
         response = SendSMSVerificationCodeView.as_view()(request)
 
         if response.status_code == 200:
@@ -292,7 +304,8 @@ class VerifySMSView(APIView):
 
         if entered_code == expected_code:
             # Verification successful
-            request.session.pop('verification_code', None)  # Remove the verification code from the session
+            # Remove the verification code from the session
+            request.session.pop('verification_code', None)
             logger.info("Verification successful.")
             return Response({'message': 'Verification successful'}, status=status.HTTP_200_OK)
         else:

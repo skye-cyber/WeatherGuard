@@ -15,49 +15,16 @@ config = configparser.ConfigParser()
 
 
 class Weather:
-    def __init__(self, loc):
+    def __init__(self, coord):
+        self.coord = coord
+
         def getCOORD():
             try:
-                self.lat, self.lon = get_latitude_longitude(self.loc)
-                if self.lat and self.lon:
-                    # Add a new section and set latitude and longitude
-                    section_name = f"{self.loc.lower()}coord"
-                    config[section_name] = {
-                        "lat": str(self.lat),
-                        "lon": str(self.lon),
-                    }
+                self.lat, self.lon = coord.split(',')
+            except Exception as e:
+                print(e)
 
-                directory = os.path.dirname(cfname)
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
-
-                if not os.path.exists(cfname):
-                    open(cfname, "a").close()
-
-                # ...
-
-                with open(cfname, "a") as config_file:
-                    config.write(config_file)
-
-            except requests.ReadTimeout:
-                print("Coordinates Read Timeout")
-
-        self.loc = loc
-        cfname = (
-            "weather\\coordCache.cfg"
-            if platform.system().lower() == "windows"
-            else "weather/coordCache.cfg"
-        )
-        coord_cache = Path(__file__).parent / cfname
-        if os.path.exists(coord_cache):
-            try:
-                config.read(coord_cache)
-                self.lat = config.get(f"{self.loc.lower()}coord", "lat")
-                self.lon = config.get(f"{self.loc.lower()}coord", "lon")
-            except configparser.NoSectionError:
-                getCOORD()
-        else:
-            getCOORD()
+        getCOORD()
 
     def get_daily_forecast(self):
         url = f"https://api.open-meteo.com/v1/forecast?latitude={
@@ -99,7 +66,7 @@ class Weather:
                 parent_dir = os.path.dirname(cache_file)
                 if not os.access(parent_dir, os.W_OK):  # Check access permission
                     raise PermissionError(
-                        f"Cannot write to the parent directory '{parent_dir}'"
+                        f"[Perm] Cannot write to the parent directory '{parent_dir}'"
                     )
             try:
                 with open(str(cache_file), "w") as fp:
@@ -171,10 +138,10 @@ class Weather:
             return None
 
 
-def main(loc, _type: str = "daily7", max_attempts: bool = 5):
+def main(coord_str, loc_n=None, _type: str = "daily7", max_attempts: bool = 5):
     date = datetime.now().strftime("%Y-%m-%d")
     if _type == "daily7":
-        filename = f"weather/weekly_{loc.lower()}_{date}.json"
+        filename = f"weatherCache/weekly_{loc_n.lower()}_{date}.json"
         cache_file = os.path.join(Path(__file__).parent, filename)
         if os.path.exists(cache_file):
             print(f"Loading data from daily7 file {cache_file}")
@@ -182,18 +149,18 @@ def main(loc, _type: str = "daily7", max_attempts: bool = 5):
                 return json.load(file)
 
         else:
-            init = Weather(loc)
+            init = Weather(coord_str)
             forecast = init.get_weekly_forecast(cache_file)
 
     elif _type == "hourly3":
-        filename = f"weather/horly3_{loc.lower()}_{date}.json"
+        filename = f"weatherCache/horly3_{loc_n.lower()}_{date}.json"
         cache_file = os.path.join(Path(__file__).parent, filename)
         if os.path.exists(cache_file):
             print(f"Loading data from horly3 file {cache_file}")
             with open(cache_file, "r") as json_file:
                 return json.load(json_file)
         else:
-            init = Weather(loc)
+            init = Weather(coord_str)
             forecast = init._3hrs_forecast(cache_file)
 
     if forecast:

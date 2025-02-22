@@ -1,6 +1,7 @@
 # weather/templatetags/custom_filters.py
 import logging
-from datetime import datetime
+import re
+from datetime import datetime, date
 
 from django import template
 
@@ -35,6 +36,7 @@ def get_weather_description(weather_code):
         1: "Mainly clear",
         2: "Partly cloudy",
         3: "Overcast",
+        4: r"75-100% cloudy",
         45: "Fog",
         48: "Freezing fog",
         51: "Drizzle (light)",
@@ -56,7 +58,26 @@ def get_weather_description(weather_code):
         99: "Thunderstorm (heavy)",
     }
 
-    return weather_codes.get(weather_code, "Unknown weather code")
+    code = weather_codes.get(weather_code, "Unknown weather code")
+    if code == "Unknown weather code":
+        validCode = validate_and_extract_code(weather_code)
+        code = weather_codes.get(validCode, "Unknown weather code")
+    return code
+
+
+def validate_and_extract_code(code):
+    # Define the regex pattern to match the code in the form 'XXd'
+    pattern = r'^(\d{2})d$'
+
+    # Use re.match to check if the code matches the pattern
+    match = re.match(pattern, code)
+
+    if match:
+        # Extract the numeric part
+        numeric_part = match.group(1)
+        return int(numeric_part)  # Convert to integer if needed
+    else:
+        return None  # Return None if the code does not match the pattern
 
 
 @register.filter
@@ -65,6 +86,7 @@ def get_icon(val):
         "Clear sky": 'clear-sky.png',
         "Mainly clear": 'mainly-clear.png',
         "Partly cloudy": 'partly-cloudy.png',
+        r"75-100% cloudy": 'overcast.png',
         "Overcast": 'overcast.png',
         "Fog": 'fog.png',
         "Freezing fog": 'freezing-fog.png',
@@ -90,12 +112,28 @@ def get_icon(val):
 
 
 @register.filter
-def get_index(value, index):
-    """Returns the index of 'arg' in 'value'."""
+def get_index(data, value):
+    """Returns the index of 'value' in 'data'."""
     try:
-        return value[index]
+        return data[value]
     except ValueError:
         return 'Index out of range'  # Or handle as needed
+
+
+@register.filter
+def find_index(data, value):
+    """Returns the index of 'value' in 'data'."""
+    try:
+        val_index = [index for (index, val) in enumerate(data) if val == '2025-01-23'][0]
+        return val_index
+    except ValueError:
+        return 'Index out of range'  # Or handle as needed
+
+@register.filter(name='today_date')
+def DateToday(val=None):
+    date_object = date.today().strftime('%Y-%m-%d')
+    print("Date Today:", '+'*1000, date_object)
+    return date_object
 
 
 @register.filter
@@ -126,12 +164,18 @@ def get_day(date_string):
 
 
 @register.filter
+def toTitle(string: str) -> str:
+    return string.title()
+
+
+@register.filter
 def normal_time(datetime_string):
     # Convert the string to a datetime object
     datetime_object = datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M")
 
     # Format the datetime object into a more readable format
-    formatted_time = datetime_object.strftime("%I:%M %p")  # Example: "2024-10-31 06:20 PM"
+    formatted_time = datetime_object.strftime(
+        "%I:%M %p")  # Example: "2024-10-31 06:20 PM"
 
     # Print the formatted time
     print(f"The formatted time is: {formatted_time}")
