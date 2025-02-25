@@ -2,7 +2,6 @@
 import logging
 import re
 from datetime import datetime, date
-
 from django import template
 
 register = template.Library()
@@ -129,10 +128,10 @@ def find_index(data, value):
     except ValueError:
         return 'Index out of range'  # Or handle as needed
 
+
 @register.filter(name='today_date')
 def DateToday(val=None):
     date_object = date.today().strftime('%Y-%m-%d')
-    print("Date Today:", '+'*1000, date_object)
     return date_object
 
 
@@ -157,8 +156,7 @@ def get_day(date_string):
         6: 'Sunday'
     }
     # Print results
-    print(
-        f"The day of the week for {date_string} is: {day_of_week}: {day_dict.get(day_of_week)}")
+    # print(f"The day of the week for {date_string} is: {day_of_week}: {day_dict.get(day_of_week)}")
     # print(f"The ISO weekday for {date_string} is: {iso_day_of_week} (1=Monday, 7=Sunday)")
     return day_dict.get(day_of_week)
 
@@ -178,5 +176,5 @@ def normal_time(datetime_string):
         "%I:%M %p")  # Example: "2024-10-31 06:20 PM"
 
     # Print the formatted time
-    print(f"The formatted time is: {formatted_time}")
+    # print(f"The formatted time is: {formatted_time}")
     return formatted_time

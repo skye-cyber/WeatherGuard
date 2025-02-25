@@ -15,28 +15,64 @@ class CustomUser(AbstractUser):
         default=uuid.uuid4, null=True, blank=True)
     groups = models.ManyToManyField(
         Group,
-        related_name='customuser_set',  # Renamed to avoid conflict
+        related_name='customuser_set',  # Avoids conflict with default User.groups
         blank=True,
         help_text='The groups this user belongs to.',
         verbose_name='groups',
     )
-
     user_permissions = models.ManyToManyField(
         Permission,
-        related_name='customuser_set',  # Renamed to avoid conflict
+        related_name='customuser_set',  # Avoids conflict with default User.user_permissions
         blank=True,
         help_text='Specific permissions for this user.',
         verbose_name='user permissions',
     )
-    user_locations = models.ManyToManyField(  # Renamed to avoid conflict
+    user_locations = models.ManyToManyField(
         'Location',
-        related_name='users',  # Specify a unique related_name
+        related_name='users',  # Now you can access all users related to a location
         blank=True,
         verbose_name='locations',
     )
 
+    # Define choices for preferences
+    VERBOSITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+    ]
+    NOTIFICATION_FREQUENCY_CHOICES = [
+        ('hourly', 'Hourly'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+    ]
+    NOTIFICATION_MEDIUM_CHOICES = [
+        ('sms', 'SMS'),
+        ('email', 'Email'),
+    ]
+
+    # Add preference fields with defaults
+    verbosity = models.CharField(
+        max_length=10,
+        choices=VERBOSITY_CHOICES,
+        default='medium'
+    )
+    notification_frequency = models.CharField(
+        max_length=10,
+        choices=NOTIFICATION_FREQUENCY_CHOICES,
+        default='daily'
+    )
+    notification_medium = models.CharField(
+        max_length=10,
+        choices=NOTIFICATION_MEDIUM_CHOICES,
+        default='email'
+    )
+
     def is_fully_verified(self):
         return self.email_verified or self.phone_verified
+
+    @property
+    def locations(self):
+        return self.user_locations.all()
 
     def __str__(self):
         return self.username
@@ -69,11 +105,16 @@ def save_user_profile(sender, instance, **kwargs):
 
 
 class Location(models.Model):
-    user = models.ForeignKey(
-        # Renamed to avoid conflict
-        CustomUser, on_delete=models.CASCADE, related_name='location_set', default=1)
     name = models.CharField(max_length=255)
     coordinates = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.coordinates})"
+
+
+"""
+@receiver(post_save, sender=CustomUser)
+def create_default_location(sender, instance, created, **kwargs):
+    if created:  # Only run when a new user is created
+        Location.objects.create(user=instance, name="Default Location", coordinates="0,0")
+"""

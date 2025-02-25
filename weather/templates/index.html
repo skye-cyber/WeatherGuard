@@ -7,47 +7,78 @@
     {% load custom_filters %}
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script type="text/javascript" src="{% static 'js/script.js' %}"></script>
 </head>
 <body class="bg-gradient-to-r from-[#00557f] to-sky-500 dark:bg-gray-950 transition-colors duration-300">
-    <header class="hidden flex w-full z-10 mb-1 bg-blue-500 justify-between items-center px-4">
-        <div class="text-center">
-            <h1 class="text-2xl font-bold text-[#34318c] dark:text-[#a8a4ff]">
-                <span class="inline-block animate-fade-in">WeatherGuard</span>
-            </h1>
-            <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Your weather companion</p>
-        </div>
-        <section>
-            <button id="settings-button"
-                    onclick="document.getElementById('settings-modal').classList.remove('hidden');"
-                    class="relative bg-indigo-600 inline-flex items-center justify-center hover:text-black overflow-hidden font-medium text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition duration-300 ease-out group">
-                <span class="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-[#ffff00] group-hover:translate-x-0 ease">
-                    <svg style="width: 42px; height: 42px; fill: #ff5722;" viewBox="0 0 24 24">
-                        <path d="M14.04 12c-.06-.08-.12-.16-.19-.25L15.47 12.69c.81.72 1.31 1.65 1.48 2.64l1.01-.31c-.05-.65-.15-1.29-.3-1.91zm2.35 2.13c-.6.23-1.24.41-1.91.52l-.3-1.01c.72-.81 1.65-1.31 2.63-1.48l1.01.3c.65-.05 1.29-.15 1.92-.3zm7.7-4.21c-.39-.15-.77-.33-1.17-.54l-1.77 1.77c-3.02-3.03-7.64-4.81-12.59-4.37l1.05 1.05c4.57.42 8.44 2.41 10.59 5.37zm-8.48 1.48l-2.83-2.83c-.14-.14-.33-.22-.53-.22s-.39.08-.53.22-.22.33-.22.53.08.39.22.53l2.83 2.83c.14.14.33.22.53.22s.39-.08.53-.22c.13-.14.21-.33.21-.53-.01-.2-.09-.39-.21-.53zM16.09 7.09c.63.63 1.71.63 2.34 0s.63-1.71 0-2.34-1.71-.63-2.34 0-.63 1.71 0 2.34zm-1.67 0h1.67v3.32h-3.34v-1.67c0-.46.37-.83.83-.83s.83.37.83.83v1.67h-1.67v-1.67c0-.46-.37-.83-.83-.83s-.83.37-.83.83v1.67z" />
-                    </svg>
-                </span>
-                <span class="absolute inset-0 flex items-center justify-center w-full h-full text-indigo-600 transition-all duration-300 transform -translate-x-full group-hover:translate-x-0 ease">
-                    Settings
-                </span>
-                <span class="relative">Settings</span>
-            </button>
 
-            <a href="{% url 'logout' %}">
-                <button class="relative bg-[#00557f] inline-flex items-center justify-center px-4 py-2 overflow-hidden font-medium text-indigo-200 hover:text-black transition duration-300 ease-out border-2 border-[#a10051] rounded-2xl shadow-2xl group">
-                    <span class="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-[#62c300] group-hover:translate-x-0 ease">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+    <!-- Toggle Button -->
+    <button id="togglePanel" title="View Panel" class="fixed top-2 z-40 p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
+        <!--search bar-->
+    <section class="fixed w-full z-10 top-1 flex justify-center">
+        <div class="relative w-full max-w-md">
+            <!-- Search Icon -->
+            <div class="absolute top-3 left-3 flex items-center cursor-pointer">
+                <svg class="w-6 h-6 text-gray-600 hover:text-blue-700 transition duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0-14 0"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6"></path>
+                </svg>
+            </div>
+            <!-- Search Input -->
+            <input
+                type="text"
+                aria-label="Search weather by location name"
+                title="Search weather by location name"
+                class="block w-full px-12 py-2.5 text-gray-900 placeholder-gray-500 bg-white/80 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 ease-in-out cursor-auto"
+                placeholder="Search location...">
+        </div>
+    </section>
+
+
+    <!-- Header -->
+    <header class="flex w-full z-10 mb-1 bg-gradient-to-r from-blue-600 to-indigo-600 justify-between items-center px-6 shadow-lg">
+        <!-- Side Panel -->
+        <div id="sidePanel" class="fixed top-0 left-0 h-full w-64 bg-white shadow-2xl transform -translate-x-full transition-transform duration-500 ease-in-out z-30">
+            <div class="p-6">
+                <h1 class="text-3xl font-bold text-indigo-700 dark:text-indigo-300">
+                    <span class="inline-block animate-fade-in">WeatherGuard</span>
+                </h1>
+                <p class="text-gray-600 mt-2">{{ user }} personalized weather assistant</p>
+
+                <ul class="mt-6 space-y-4">
+                    <!-- Settings Button -->
+                    <button id="settings-button"
+                            class="relative bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-3 px-6 w-full rounded-lg shadow-md flex items-center justify-center gap-2 transition-all duration-300">
+                        <svg class="w-6 h-6 fill-yellow-400 transition-all duration-300 group-hover:fill-orange-500" viewBox="0 0 24 24">
+                            <path d="M14.04 12c-.06-.08-.12-.16-.19-.25L15.47 12.69c.81.72 1.31 1.65 1.48 2.64l1.01-.31c-.05-.65-.15-1.29-.3-1.91zm2.35 2.13c-.6.23-1.24.41-1.91.52l-.3-1.01c.72-.81 1.65-1.31 2.63-1.48l1.01.3c.65-.05 1.29-.15 1.92-.3zm7.7-4.21c-.39-.15-.77-.33-1.17-.54l-1.77 1.77c-3.02-3.03-7.64-4.81-12.59-4.37l1.05 1.05c4.57.42 8.44 2.41 10.59 5.37zm-8.48 1.48l-2.83-2.83c-.14-.14-.33-.22-.53-.22s-.39.08-.53.22-.22.33-.22.53.08.39.22.53l2.83 2.83c.14.14.33.22.53.22s.39-.08.53-.22c.13-.14.21-.33.21-.53-.01-.2-.09-.39-.21-.53zM16.09 7.09c.63.63 1.71.63 2.34 0s.63-1.71 0-2.34-1.71-.63-2.34 0-.63 1.71 0 2.34zm-1.67 0h1.67v3.32h-3.34v-1.67c0-.46.37-.83.83-.83s.83.37.83.83v1.67h-1.67v-1.67c0-.46-.37-.83-.83-.83s-.83.37-.83.83v1.67z" />
                         </svg>
-                    </span>
-                    <span class="absolute flex items-center justify-center w-full h-full text-indigo-600 transition-all duration-300 transform group-hover:translate-x-full ease">
-                        Logout
-                    </span>
-                    <span class="relative">Logout</span>
-                </button>
-            </a>
-        </section>
+                        <span>Settings</span>
+                    </button>
+
+                    <!-- Logout Button -->
+                    <a href="{% url 'logout' %}">
+                        <button class="relative bg-red-600 hover:bg-red-700 text-white font-bold py-3 mt-2 px-6 w-full rounded-lg shadow-md flex items-center justify-center gap-2 transition-all duration-300">
+                            <svg class="w-6 h-6 text-white transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                            </svg>
+                            <span>Logout</span>
+                        </button>
+                    </a>
+                    <!-- Trigger Button -->
+                    <div id="openSettingsManBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg gap-2 cursor-pointer">
+                        Manage Locations
+                    </div>
+                </ul>
+            </div>
+        </div>
     </header>
 
-    <div class="container mx-auto px-4 mt-2">
+
+    <div class="container mt-14 mx-auto px-4">
         <main class="flex flex-col md:flex-row gap-8 min-h-[600px] md:p-6">
             <!-- Current Weather Section -->
             <section class="flex-1 basis-[300px] space-y-6">
@@ -86,7 +117,7 @@
                     <p>Min-Temperature: <span class="text-[#5500ff]">{{ weekly_data.temperature_2m_min|get_index:index }}</span> <span class="text-[#ffff00] font-bold">°C</span></p>
                 </section>
                     <button id="settings-button" onclick="document.getElementById('settings-modal').classList.remove('hidden');"
-                            class="bg-[#6366f1] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#4f46e5] transition-colors shadow-lg shadow-gray-200 dark:shadow-gray-800">
+                            class="hidden bg-[#6366f1] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#4f46e5] transition-colors shadow-lg shadow-gray-200 dark:shadow-gray-800">
                         Set Location
                     </button>
                 </div>
@@ -101,7 +132,7 @@
                 {% if weather_data_dict %}
                     {% with hourly3=weather_data_dict %}
                         <!-- Daily 3 HOURS Forecast Section -->
-                        <div class="bg-green-100 p-6 rounded-lg shadow-md transition duration-500 ease-in-out hover:scale-105 dark:bg-slate-950">
+                        <div class="bg-green-100 p-6 rounded-lg w-full shadow-md transition duration-500 ease-in-out hover:scale-105 dark:bg-slate-950">
                             <h2 class="text-xl font-bold mb-2 text-black">For 3 HRS</h2>
                             <h2 class="text-gray-600">Country: <span class="text-green-700">{{ hourly3.country|default:"Value not found" }}</h2>
                             {% with weather_desc=hourly3.icon|get_desc %}
@@ -161,26 +192,30 @@
                                                 <section class="bg-white/90 rounded-lg mb-4 p-3">
                                                    <div class="block rounded-lg max-w-full overflow-hidden h-fit">
                                                        <!-- Sample Day Forecast -->
-                                                       <div class="bg-green-100 border-4 border-yellow-400 p-6 rounded-lg shadow-md transition duration-500 ease-in-out hover:scale-105 dark:bg-slate-950">
-                                                       <h2 class="text-xl font-bold mb-2 text-black">
-                                                           {{ day|get_day }}-{{ day }}
-                                                       </h2>
-                                                       <div class="flex items-center mb-2">
-                                                           <img src="{% static 'media/images/' %}{{ desc|get_icon }}" alt="Weather Icon" class="w-16 h-16"/>
-                                                           <p class="whitespace-prewrap break-all text-gray-600 ml-3 dark:text-gray-300">Condition: <span class="text-yellow-600 font-semibold">{{ desc }}</span></p>
-                                                       </div>
-                                                       <p class="text-gray-600 dark:text-gray-200">Max Temperature:<span class="text-red-600 dark:text-red-500">{{ weekly_data.temperature_2m_max|get_index:index }}°C</span></p>
-                                                       <p class="text-gray-600 dark:text-gray-200">Min Temperature:<span class="text-orange-700 dark:text-orange-500">{{ weekly_data.temperature_2m_min|get_index:index }}°C</span></p>
-                                                       {% if weekly_data.humidity %}
-                                                           <p class="text-gray-600 dark:text-gray-200">Humidity:<span class="text-green-800 dark:text-green-400">{{ weekly_data.humidity }} %</span></p>
-                                                       {% endif %}
-                                                       {% if weekly_data.wind_speed %}
-                                                           <p class="text-gray-600 dark:text-gray-200">Wind Speed:<span class="text-green-800 dark:text-green-400">{{ weekly_data.wind_speed }} km/h</span></p>
-                                                       {% endif %}
-                                                       <p class="text-gray-600 dark:text-gray-200">Precipitation:<span class="text-green-800 dark:text-green-400">{{ weekly_data.precipitation_sum|get_index:index }} mm</span></p>
-                                                       <p class="text-gray-600 dark:text-gray-200">Sunrise:<span class="text-green-800 dark:text-green-400">{{ weekly_data.sunrise|get_index:index|normal_time }}</span></p>
-                                                       <p class="text-gray-600 dark:text-gray-200">Sunset:<span class="text-green-800 dark:text-green-400">{{ weekly_data.sunset|get_index:index|normal_time }}</span></p>
-                                                       </div>
+                                                       <div class="bg-blue-50 border-2 border-blue-400 p-6 rounded-lg shadow-lg transition duration-500 ease-in-out hover:scale-105 dark:bg-slate-900 dark:border-blue-500">
+                                                            <h2 class="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">
+                                                                {{ day|get_day }} - {{ day }}
+                                                            </h2>
+                                                            <div class="flex items-center mb-2">
+                                                                <img src="{% static 'media/images/' %}{{ desc|get_icon }}" alt="Weather Icon" class="w-16 h-16"/>
+                                                                <p class="whitespace-prewrap break-all text-gray-700 dark:text-gray-300 ml-3">
+                                                                    Condition: <span class="text-yellow-600 font-semibold">{{ desc }}</span>
+                                                                </p>
+                                                            </div>
+                                                            <p class="text-gray-700 dark:text-gray-300">Max Temperature: <span class="text-red-600 dark:text-red-500">{{ weekly_data.temperature_2m_max|get_index:index }}°C</span></p>
+                                                            <p class="text-gray-700 dark:text-gray-300">Min Temperature: <span class="text-orange-700 dark:text-orange-500">{{ weekly_data.temperature_2m_min|get_index:index }}°C</span></p>
+
+                                                            {% if weekly_data.humidity %}
+                                                                <p class="text-gray-700 dark:text-gray-300">Humidity: <span class="text-green-800 dark:text-green-400">{{ weekly_data.humidity }} %</span></p>
+                                                            {% endif %}
+                                                            {% if weekly_data.wind_speed %}
+                                                                <p class="text-gray-700 dark:text-gray-300">Wind Speed: <span class="text-green-800 dark:text-green-400">{{ weekly_data.wind_speed }} km/h</span></p>
+                                                            {% endif %}
+
+                                                            <p class="text-gray-700 dark:text-gray-300">Precipitation: <span class="text-green-800 dark:text-green-400">{{ weekly_data.precipitation_sum|get_index:index }} mm</span></p>
+                                                            <p class="text-gray-700 dark:text-gray-300">Sunrise: <span class="text-green-800 dark:text-green-400">{{ weekly_data.sunrise|get_index:index|normal_time }}</span></p>
+                                                            <p class="text-gray-700 dark:text-gray-300">Sunset: <span class="text-green-800 dark:text-green-400">{{ weekly_data.sunset|get_index:index|normal_time }}</span></p>
+                                                    </div>
                                                    </div>
                                                 </section>
                                                {% endwith %}
@@ -196,42 +231,17 @@
         </main>
 
         <!-- Settings Modal -->
-        <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-            <div class="relative bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-fit max-h-[95vh] overflow-y-auto bg-gradient-to-b from-[#ffaa00] via-[#ff5500] via-[#de0000] to-[#b10085]">
+        <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-30 border-none flex items-center justify-center w-full transform translate-x-full transition-transform duration-700 ease-in-out">
+            <div class="relative bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-lg max-h-[95vh] overflow-y-auto">
                 <!-- Close Button -->
-                <button id="closeModal" class="absolute top-2 right-2 text-cyan-800 dark:text-gray-500 hover:text-[#0b03ff] dark:hover:text-gray-400 hover:rotate-90 transition duration-300" onclick="document.getElementById('settings-modal').classList.add('hidden');">
+                <button id="close-settingsX" class="absolute top-2 right-2 text-cyan-800 dark:text-gray-500 hover:text-[#0b03ff] dark:hover:text-gray-400 hover:rotate-90 transition duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
-                <h2 class="text-2xl font-bold mb-4 text-blue-600 dark:text-blue-400">Settings</h2>
-                <div class="block md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:grid-flow-row-dense gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <div class="flex items-center gap-2 mt-1">
-                            <div id="location-display" class="hidden flex-1 p-2 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-between">
-                                <span id="location-value" class="text-sm text-gray-700 dark:text-gray-300"></span>
-                                <button id="edit-location" class="text-blue-600 hover:text-blue-800">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div id="location-edit" class="flex-1 p-2 border border-gray-300 rounded-md text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 flex items-center gap-2 hidden">
-                                <input type="text" id="location-input" class="flex-1 p-2 border border-gray-300 rounded-md text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300" placeholder="Enter your city">
-                                <button id="save-location" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
-                                <button id="cancel-edit" class="text-red-600 hover:text-red-800">Cancel</button>
-                            </div>
-                            <button id="auto-detect-button" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                                {% if user.location_name %}
-                                <span>{{ user.location_name }}</span>
-                                {% else %}
-                                Not-set
-                                {% endif %}
-                            </button>
-                        </div>
-                    </div>
-
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Settings</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Notification Options -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notification Options</label>
                         <div class="mt-1 space-y-2">
@@ -245,7 +255,7 @@
                             </div>
                         </div>
                     </div>
-
+                    <!-- Notification Frequency -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notification Frequency</label>
                         <div class="mt-1 space-y-2">
@@ -263,7 +273,7 @@
                             </div>
                         </div>
                     </div>
-
+                    <!-- Verbosity -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Verbosity</label>
                         <div class="mt-1 space-y-2">
@@ -287,6 +297,82 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Modal Backdrop & Container -->
+    <div
+    id="modalBackdrop"
+    class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center overflow-y-auto h-full w-full transition-transform duration-700 ease-in-out transform translate-x-full"
+    role="dialog"
+    aria-labelledby="modal-title"
+    aria-modal="true"
+    >
+    <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-4">
+        <h3 id="modal-title" class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+            Manage your Location Here
+        </h3>
+        <button
+            id="closeModalBtn"
+            aria-label="Close modal"
+            class="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
+        >
+            <svg class="w-6 h-6 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+            <path
+                d="M14.53 3.47a.75.75 0 0 0-1.06 0L9 7.94 4.53 3.47a.75.75 0 1 0-1.06 1.06L7.94 9l-4.47 4.47a.75.75 0 1 0 1.06 1.06L9 10.06l4.47 4.47a.75.75 0 0 0 1.06-1.06L10.06 9l4.47-4.47a.75.75 0 0 0 0-1.06z"
+            />
+            </svg>
+        </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="space-y-4">
+        <h4 class="text-xl font-medium text-gray-700 dark:text-gray-300">Set Locations</h4>
+        {% if user.user_locations.all %}
+        <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+            {% for location in user.user_locations.all %}
+            <li class="py-2 flex justify-between items-center">
+            <span class="font-medium text-gray-800 dark:text-gray-100">{{ location.name }}</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ location.coordinates }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-500 dark:text-gray-400">No locations available.</p>
+        {% endif %}
+        </div>
+
+        <!-- Add New Location Section -->
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Add New Location</label>
+        <div class="flex items-center gap-2">
+            <input
+            type="text"
+            id="location-input"
+            value=""
+            class="w-full p-2 border border-gray-300 rounded-md text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+            placeholder="Enter your city"
+            >
+            <button
+            id="save-location"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            >
+            Save
+            </button>
+        </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex justify-end mt-6">
+        <button
+            id="closeModalBtnFooter"
+            class="px-5 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+            Close
+        </button>
+        </div>
+    </div>
     </div>
 
     </div>

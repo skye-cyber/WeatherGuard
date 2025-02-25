@@ -31,7 +31,7 @@ from twilio.rest import Client
 
 from .forms import CustomRegistrationForm
 from .get_coordinates import get_latitude_longitude
-from .models import CustomUser, Profile
+from .models import CustomUser, Profile, Location
 from .serializers import CustomUserSerializer
 from .weather import main
 from .tests import simulate
@@ -70,14 +70,17 @@ def geocode_location(request):
 
 @login_required
 def get_home(request):
+    locations = request.user.user_locations.filter(users=request.user)
+    coordinates_list = [location.coordinates for location in locations]
+    print(coordinates_list)
     content = simulate()  # get_weatherData(request)
     context = {"weather_data_dict": content}
     if not context:
         return render(request, 'index.html')
     elif isinstance(context, str):
-        print("context", context)
+        # print("context", context)
         return render(request, 'index.html', {"error_messages": context})
-    print(context)
+    # print(context)
     return render(request, 'index.html', context)
 
 
@@ -170,7 +173,7 @@ def send_email(user, request):
     </body>
     </html>
     """
-    from_email = 'skye17@gmail.com'
+    from_email = 'WeatherGuard'
     recipient_list = [user.email]
     email = EmailMessage(subject, html_message, from_email, recipient_list)
     email.content_subtype = "html"  # this is required because the default is text/plain
@@ -179,7 +182,7 @@ def send_email(user, request):
 
 class RegisterAPIView(APIView):
     def post(self, request, *args, **kwargs):
-        logger.info(f"Received POST request with data: {request.data}")
+        # ogger.info(f"Received POST request with data: {request.data}")
 
         # Extract location data from request
         location_name = request.data.get('location_name')
@@ -212,7 +215,6 @@ class ResendEmailAPIView(APIView):
     def post(self, request, *args, **kwargs):
         # if request.data.get('email') else user.email
         email = request.data.get('email')
-        print(email)
         if not email:
             logger.error("Email is required for resending verification.")
             return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -251,8 +253,7 @@ def verification_pending(request):
 
     # If GET request, try to use the user's phone number (if logged in)
     phone_number = request.user.phone if request.user.is_authenticated else None
-    print(phone_number)
-    print(request.user)
+
     if phone_number:
         print("Got GET request")
         # Make a POST request to the SendSMSVerificationCodeView
@@ -405,6 +406,8 @@ def GetLocationDetail(request, name=False, coord=False):
 
 
 def get_weatherData(request):
+    locations = request.user.user_locations.filter(users=request.user)
+    coordinates_list = [location.coordinates for location in locations]
     # Get all locations from the database or source
     # Ensure this function returns a list of locations
     locations = GetLocationDetail(request, coord=True)

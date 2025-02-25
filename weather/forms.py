@@ -56,8 +56,7 @@ class CustomRegistrationForm(UserCreationForm):
     class Meta:
         model = CustomUser
         fields = ('username', 'email', 'password1', 'password2',
-                  'phone', 'location_name', 'location_coordinates',
-                  'locations')
+                  'phone', 'locations')
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
