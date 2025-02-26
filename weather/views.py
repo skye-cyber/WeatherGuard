@@ -29,8 +29,7 @@ from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from twilio.rest import Client
 
-from .forms import CustomRegistrationForm
-from .get_coordinates import get_latitude_longitude
+from .get_coordinates import CoordAdmin
 from .models import CustomUser, Profile, Location
 from .serializers import CustomUserSerializer
 from .weather import main
@@ -58,7 +57,8 @@ def geocode_location(request):
     if not location:
         return Response({'error': 'Location is required'}, status=400)
 
-    coord = get_latitude_longitude(location)
+    Coordadmin = CoordAdmin(location)
+    coord = Coordadmin.Control()
     if not coord:
         return Response({'error': 'Coordinates not found'}, status=404)
 
@@ -70,9 +70,9 @@ def geocode_location(request):
 
 @login_required
 def get_home(request):
-    locations = request.user.user_locations.filter(users=request.user)
-    coordinates_list = [location.coordinates for location in locations]
-    print(coordinates_list)
+    # locations = request.user.user_locations.filter(users=request.user)
+    # coordinates_list = [location.coordinates for location in locations]
+    # print(coordinates_list)
     content = simulate()  # get_weatherData(request)
     context = {"weather_data_dict": content}
     if not context:
@@ -182,7 +182,7 @@ def send_email(user, request):
 
 class RegisterAPIView(APIView):
     def post(self, request, *args, **kwargs):
-        # ogger.info(f"Received POST request with data: {request.data}")
+        # logger.info(f"Received POST request with data: {request.data}")
 
         # Extract location data from request
         location_name = request.data.get('location_name')

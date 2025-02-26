@@ -41,4 +41,86 @@ document.addEventListener('DOMContentLoaded', ()=>{
         modalBackdrop.classList.toggle("translate-x-full");
         modalBackdrop.classList.toggle("translate-x-1");
     });
-})
+
+    const AddlocationBt = document.getElementById('save-location');
+    const locationInput = document.getElementById('location-input');
+    AddlocationBt.addEventListener('click', () =>{
+        HandleLoading("show");
+        const locationValue = locationInput.value;
+        const locationData = {'location_name': locationValue}
+
+        AddLocation()
+        async function AddLocation(){
+            try{
+                const response = await fetch('/new-location/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.getElementsByName('csrfmiddlewaretoken')[0].value
+                    },
+                    body: JSON.stringify(locationData)
+                });
+
+                const response_data = await response.json()
+
+                HandleLoading('hide')
+
+                if (response.status===201){
+                    displayStatus('Location added Successfully.', 'success');
+                }else{
+                    const msg = response_data.statusText ? response_data.statusText : (response.statusText ? response.statusText : "" );
+                    displayStatus(`The operation to add location failed! ${msg}`, 'error')
+                }
+
+            }catch(error){
+                HandleLoading('hide');
+                displayStatus(error, 'error')
+                console.log("Error while submitting the form", error);
+            }
+        }
+
+    });
+
+    function displayStatus(message=null, type='success'){
+        const modal = type==='success' ? document.getElementById('successModal') : document.getElementById('errorModal');
+        const box = type==='success' ? document.getElementById('successBox') : document.getElementById('errorBox');
+        if(message){
+            const mesSection = type==='success' ? document.getElementById('success-message') : document.getElementById('error-message');
+            mesSection.textContent = message;
+        }
+        modal.classList.remove('hidden');
+        box.classList.remove('animate-exit');
+        box.classList.add('animate-enter')
+    }
+
+    function hideStatus(type){
+        const modal = type==='success' ? document.getElementById('successModal') : document.getElementById('errorModal');
+        const box = type==='success' ? document.getElementById('successBox') : document.getElementById('errorBox');
+
+        box.classList.remove('animate-enter')
+        box.classList.add('animate-exit');
+        setTimeout( ()=> {
+            modal.classList.add('hidden');
+        }, 310)
+    }
+
+    function HandleLoading(task){
+        const loadingModal = document.getElementById('loadingModal');
+        const modalMainBox = document.getElementById('modalMainBox');
+        if (task==="show"){
+            loadingModal.classList.remove('hidden');
+            modalMainBox.classList.remove('animate-exit');
+            modalMainBox.classList.add('animate-enter')
+        }else{
+            modalMainBox.classList.remove('animate-enter')
+            modalMainBox.classList.add('animate-exit');
+            setTimeout( ()=> {
+                loadingModal.classList.add('hidden');
+            }, 310)
+        }
+    };
+
+    window.displayStatus=displayStatus;
+    window.hideStatus=hideStatus;
+    window.HandleLoading = HandleLoading;
+});

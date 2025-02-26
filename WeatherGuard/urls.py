@@ -16,9 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from weather import views
+from weather import views, userAdmin
 from django.conf.urls.static import static
 from django.conf import settings
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -38,6 +39,9 @@ urlpatterns = [
     path('verify-email/<str:uidb64>/<str:token>/', views.verify_email, name='verify-email'),
     path('weather/', views.WeatherView.as_view(), name='weather'),
     path('weather-notification/', views.WeatherNotificationView.as_view(), name='weather-notification'),
+    path('new-location/', userAdmin.AddLocationView.as_view(), name='add_location'),
+    path('get-user-preferences/', userAdmin.GetUserPreferences.as_view(), name='get-preference'),
+    path('set-user-preferences/', userAdmin.AlterUserPreferences.as_view(), name='set-preference'),
 ]
 
 

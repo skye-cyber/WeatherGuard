@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 
 # from django.conf import settings
-from .get_coordinates import get_latitude_longitude
+from .get_coordinates import CoordAdmin
 
 # Create a configuration object
 config = configparser.ConfigParser()

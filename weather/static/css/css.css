@@ -46,3 +46,62 @@
 .pulse-hover:hover {
     animation: pulse 1s infinite;
 }
+
+@keyframes modalEnter {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes modalExit {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+.animate-enter {
+    animation: modalEnter 0.4s ease-out forwards;
+}
+
+.animate-exit {
+    animation: modalExit 0.3s ease-in forwards;
+}
+
+
+/* Tick Animation */
+@keyframes draw {
+    0% {
+        stroke-dasharray: 0, 30;
+    }
+    100% {
+        stroke-dasharray: 30, 30;
+    }
+}
+.animate-draw {
+    stroke-dasharray: 30, 30;
+    stroke-dashoffset: 0;
+    animation: draw 0.5s ease-in-out forwards;
+}
+
+/* Scale Animation */
+@keyframes scale {
+    0% {
+        transform: scale(0);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+.animate-scale {
+    animation: scale 0.8s ease-in-out;
+}

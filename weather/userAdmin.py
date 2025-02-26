@@ -1,27 +1,78 @@
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import generics, status, views
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from django.http import JsonResponse
 from .models import CustomUser, Location
 from .serializers import LocationSerializer
+from .get_coordinates import CoordAdmin
+import json
+
+
+def format_errors(serializer):
+    """
+    Extracts and formats errors from serializer.errors.
+    """
+    errors = {field: " ".join(messages)
+              for field, messages in serializer.errors.items()}
+    return errors
+
+
+def getCoord(loc_name) -> str:
+    try:
+        admin = CoordAdmin(loc_name, string=True)
+        coord = admin.Control()
+        if coord:
+            return coord
+        return None
+    except Exception:
+        return None
 
 
 class AddLocationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = LocationSerializer(data=request.data)
-        if serializer.is_valid():
-            location = serializer.save()
-            request.user.user_locations.add(location)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            location_name = request.data.get('location_name')
+
+            # Ensure location_name is provided
+            if not location_name:
+                return JsonResponse(
+                    {"status": "error", "code": 400,
+                        "statusText": "Location name is required"},
+                    status=400
+                )
+
+            coordinates = getCoord(location_name)
+
+            data = {
+                "name": location_name,
+                "coordinates": coordinates
+                }
+
+            # Initialize serializer with the constructed data
+            serializer = LocationSerializer(data=data)
+
+            if serializer.is_valid():
+                location = serializer.save()
+                request.user.user_locations.add(location)
+                return JsonResponse({"status": "success", "code": 201}, status=201)
+
+            return JsonResponse(
+                {"status": "error", "code": 400,
+                    "statusText": "Invalid form. Failed to Retrieve Coordinates", "errors": serializer.errors},
+                status=400
+            )
+
+        except Exception as e:
+            print(f"Unexpected error: {e}")  # Log error for debugging
+            return JsonResponse({"status": "error", "code": 500, "statusText": "Internal server error"}, status=500)
 
 
 class LocationCreateView(generics.CreateAPIView):
@@ -86,7 +137,9 @@ class ResetPasswordEmailView(views.APIView):
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         if not email:
-            return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+            email = request.user.email
+            if not email:
+                return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = CustomUser.objects.get(email=email)
@@ -124,3 +177,28 @@ class ResetPasswordEmailView(views.APIView):
             {"detail": "If an account with this email exists, you will receive a password reset email."},
             status=status.HTTP_200_OK
         )
+
+
+class GetUserPreferences(views.APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        data = {
+            "notification_medium": request.user.notification_medium,
+            "notification_frequency": request.user.notification_frequency,
+            "verbosity": request.user.verbosity,
+            }
+
+        print(data)
+        return JsonResponse({"data": data}, status=200)
+
+
+class AlterUserPreferences(views.APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        # data = json.loads(request.data)
+        print(request.data)
+        return JsonResponse({'status': 'success'}, status=200)
