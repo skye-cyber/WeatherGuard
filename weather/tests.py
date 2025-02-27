@@ -1,4 +1,4 @@
-from django.test import TestCase
+# from django.test import TestCase
 from datetime import datetime
 import json
 
@@ -134,9 +134,12 @@ _hourly_data = '''
     "name": "Embu",
     "cod": 200
 }'''
+hourly_data = json.loads(_hourly_data)
+data = hourly_data.get('weather')[0].get('main')
+print(data)
 
 
-def simulate():
+def simulate(h: bool = False, w: bool = False):
     # Process and format weather data
     weekly_data = json.loads(_weekly_data)
     hourly_data = json.loads(_hourly_data)
@@ -160,4 +163,8 @@ def simulate():
         "sunset": datetime.fromtimestamp(hourly_data["sys"].get("sunset")).strftime("%H:%M:%S"),
         "weekly": weekly_data,  # Weekly forecast data
     }
+    if h:
+        return hourly_data
+    if w:
+        return weekly_data
     return weather_data

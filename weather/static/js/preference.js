@@ -69,17 +69,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
     // Add change event listener
     const saveSettings = document.getElementById('save-settings');
 
-    const parentVerbosity = document.getElementById('verbosity');
-
-    const verbosity = parentVerbosity.querySelector('input[name="verbosity"]:checked').value;
-
-    const parentFrequency = document.getElementById('notification-frequency');
-    const frequency = parentFrequency.querySelector('input[name="notification-frequency"]:checked').value;
-
-    const parentMedium = document.getElementById('notification-medium');
-    const medium = parentMedium.querySelector('input[name="notification-medium"]:checked').value;
-
     saveSettings.addEventListener('click', () =>{
+        const parentVerbosity = document.getElementById('verbosity');
+
+        const verbosity = parentVerbosity.querySelector('input[name="verbosity"]:checked').value;
+
+        const parentFrequency = document.getElementById('notification-frequency');
+
+        const frequency = parentFrequency.querySelector('input[name="notification-frequency"]:checked').value;
+
+        const parentMedium = document.getElementById('notification-medium');
+        const medium = parentMedium.querySelector('input[name="notification-medium"]:checked').value;
+
         try{
             window.HandleLoading('show');
             data = {

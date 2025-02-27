@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from weather import views, userAdmin
+from weather import views, userAdmin, notificationAdmin
 from django.conf.urls.static import static
 from django.conf import settings
 
@@ -42,6 +42,8 @@ urlpatterns = [
     path('new-location/', userAdmin.AddLocationView.as_view(), name='add_location'),
     path('get-user-preferences/', userAdmin.GetUserPreferences.as_view(), name='get-preference'),
     path('set-user-preferences/', userAdmin.AlterUserPreferences.as_view(), name='set-preference'),
+    # test views
+    path('notify-now/', notificationAdmin.SendHourlyWeatherEmailAPIView.as_view(), name='notify'),
 ]
 
 

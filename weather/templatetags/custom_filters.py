@@ -123,7 +123,7 @@ def get_index(data, value):
 def find_index(data, value):
     """Returns the index of 'value' in 'data'."""
     try:
-        val_index = [index for (index, val) in enumerate(data) if val == '2025-01-23'][0]
+        val_index = [index for (index, val) in enumerate(data) if val == value][0]
         return val_index
     except ValueError:
         return 'Index out of range'  # Or handle as needed

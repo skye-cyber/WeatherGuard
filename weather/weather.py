@@ -1,14 +1,12 @@
 import configparser
 import json
 import os
-import platform
 from datetime import datetime
 # import time
 from pathlib import Path
 import requests
 
 # from django.conf import settings
-from .get_coordinates import CoordAdmin
 
 # Create a configuration object
 config = configparser.ConfigParser()
@@ -138,10 +136,12 @@ class Weather:
             return None
 
 
-def main(coord_str, loc_n=None, _type: str = "daily7", max_attempts: bool = 5):
+def main(coord_str, _type: str = "daily7", max_attempts: bool = 5):
     date = datetime.now().strftime("%Y-%m-%d")
+    loc_str = ''.join(coord_str.split(', '))
+
     if _type == "daily7":
-        filename = f"weatherCache/weekly_{loc_n.lower()}_{date}.json"
+        filename = f"weatherCache/weekly_{loc_str}_{date}.json"
         cache_file = os.path.join(Path(__file__).parent, filename)
         if os.path.exists(cache_file):
             print(f"Loading data from daily7 file {cache_file}")
@@ -153,7 +153,7 @@ def main(coord_str, loc_n=None, _type: str = "daily7", max_attempts: bool = 5):
             forecast = init.get_weekly_forecast(cache_file)
 
     elif _type == "hourly3":
-        filename = f"weatherCache/horly3_{loc_n.lower()}_{date}.json"
+        filename = f"weatherCache/horly3_{loc_str}_{date}.json"
         cache_file = os.path.join(Path(__file__).parent, filename)
         if os.path.exists(cache_file):
             print(f"Loading data from horly3 file {cache_file}")

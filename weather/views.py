@@ -1,3 +1,5 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, get_user_model, logout
 import logging
 import random
 from datetime import datetime
@@ -5,32 +7,31 @@ from datetime import datetime
 import requests
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core import exceptions
-from django.core.mail import EmailMessage, send_mail
-from django.db.models import QuerySet
+from django.core.mail import EmailMessage
+# from django.db.models import QuerySet
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseForbidden, HttpResponseRedirect,
                          JsonResponse, StreamingHttpResponse)
-from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views import View
-from django_ratelimit.decorators import ratelimit
+# from django_ratelimit.decorators import ratelimit
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
+from rest_framework.renderers import JSONRenderer
 from twilio.rest import Client
 
 from .get_coordinates import CoordAdmin
-from .models import CustomUser, Profile, Location
+from .models import CustomUser, Profile
 from .serializers import CustomUserSerializer
 from .weather import main
 from .tests import simulate
@@ -48,7 +49,8 @@ def get_register(request):
 
 
 def get_verification(request):
-    return render(request, "registration/verify.html")
+    user_email = request.session.get('user_email', None)
+    return render(request, "registration/verify.html", {'user_email': user_email})
 
 
 @api_view(['GET'])
@@ -70,17 +72,13 @@ def geocode_location(request):
 
 @login_required
 def get_home(request):
-    # locations = request.user.user_locations.filter(users=request.user)
-    # coordinates_list = [location.coordinates for location in locations]
-    # print(coordinates_list)
-    content = simulate()  # get_weatherData(request)
+    content = get_weatherData(request)
     context = {"weather_data_dict": content}
-    if not context:
+    logger.info("Got---", content)
+    if not content:
         return render(request, 'index.html')
-    elif isinstance(context, str):
-        # print("context", context)
-        return render(request, 'index.html', {"error_messages": context})
-    # print(context)
+    elif isinstance(content, str):
+        return render(request, 'index.html', {"error_messages": content})
     return render(request, 'index.html', context)
 
 
@@ -181,7 +179,10 @@ def send_email(user, request):
 
 
 class RegisterAPIView(APIView):
+    renderer_classes = [JSONRenderer]  # Force JSON responses
+
     def post(self, request, *args, **kwargs):
+        # return Response({'errors':errors}, status=HTTP_400_BAD_REQUEST)
         # logger.info(f"Received POST request with data: {request.data}")
 
         # Extract location data from request
@@ -204,17 +205,21 @@ class RegisterAPIView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             send_email(user, request)  # Call the send_email function
-            messages.success(
-                request, 'Registration successful! Please verify your email to activate your account.')
-            return redirect('verification_page')
+            # Store the email in the session for later use
+            request.session['user_email'] = data['email']
+
+            # Return JSON success response instead of redirecting
+            return Response({'status': 'success', 'redirect_url': reverse('verification_page')}, status=200)
         logger.error(f"Serializer errors: {serializer.errors}")
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+        return Response({'errors': serializer.errors}, status=HTTP_400_BAD_REQUEST)
 
 
 class ResendEmailAPIView(APIView):
     def post(self, request, *args, **kwargs):
         # if request.data.get('email') else user.email
         email = request.data.get('email')
+        if not email:
+            email = request.session.get('user_email', None)
         if not email:
             logger.error("Email is required for resending verification.")
             return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -320,47 +325,36 @@ def verification_form(request):
 
 
 # @ratelimit(key='ip', rate='5/m', method='ALL', block=True)
-def user_login(request):
-    """if getattr(request, 'limited', False):
-        return HttpResponseForbidden('Rate limit exceeded')"""
 
+def user_login(request):
     if request.method == "POST":
-        # Instantiate the form with submitted data
         form = AuthenticationForm(request, data=request.POST)
 
-        # Check wether the form is valid
         if form.is_valid():
             cd = form.cleaned_data
             user = authenticate(
                 request, username=cd['username'], password=cd['password'])
 
-            # Check if the user exists
             try:
                 user = CustomUser.objects.get(username=cd["username"])
             except CustomUser.DoesNotExist:
                 messages.error(request, 'User does not exist.')
                 return render(request, 'registration/login.html', {'form': form})
 
-            # User exists
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    # messages.success(request, f'Welcome, {cd["username"]}. You are now logged in.')
-                    if user.email_verified or user.phone_verified:
-                        return redirect('home')
-                    else:
-                        return redirect('await-verification')
-
+                    return redirect('home') if user.email_verified or user.phone_verified else redirect('await-verification')
                 else:
                     messages.error(request, 'Account is disabled❌')
             else:
                 messages.error(request, 'Incorrect login credentials')
-        else:
-            messages.error(request, 'Invalid username or password.')
 
-    # When the user_login view is submitted via GET request a new login form is Instantiated with for = LoginForm() to display it in the template.
+        # If form is invalid, return it with errors
+        return render(request, 'registration/login.html', {'form': form})
+
+    # GET request - return a blank form
     else:
-        # form = LoginForm()
         form = AuthenticationForm()
     return render(request, 'registration/login.html', {'form': form})
 
@@ -410,70 +404,57 @@ def get_weatherData(request):
     coordinates_list = [location.coordinates for location in locations]
     # Get all locations from the database or source
     # Ensure this function returns a list of locations
-    locations = GetLocationDetail(request, coord=True)
-    locNames = GetLocationDetail(request, name=True)
-    weather_data_list = []
-    error_locations = []
-
-    # Fetch weather data for each location
-    if locations:
-        for loc, locName in zip(locations, locNames):
-            try:
-                # Retrieve weather data for the current location
-                weekly_data = main(loc)
-                hourly_data = main(loc, _type='hourly3')
-
-                # Check for API errors
-                if isinstance(weekly_data, str) and weekly_data in ("RequestFailure", "ConnectionError"):
-                    error_locations.append(
-                        {"location": loc, "error": weekly_data})
-                    continue
-                if isinstance(hourly_data, str) and hourly_data in ("RequestFailure", "ConnectionError"):
-                    error_locations.append(
-                        {"location": loc, "error": hourly_data})
-                    continue
-
-                # Process and format weather data
-                weather_data = {
-                    "locName": hourly_data.get("name"),
-                    "country": hourly_data["sys"].get("country"),
-                    # Convert to Celsius
-                    "temperature": hourly_data["main"].get("temp") - 273.15,
-                    "icon": hourly_data["weather"][0].get("icon"),
-                    "visibility": hourly_data["visibility"],
-                    "feels_like": hourly_data["main"].get("feels_like") - 273.15,
-                    "humidity": hourly_data["main"].get("humidity"),
-                    "pressure": hourly_data["main"].get("pressure"),
-                    "wind_speed": hourly_data["wind"].get("speed"),
-                    "wind_direction": hourly_data["wind"].get("deg"),
-                    "weather_main": hourly_data["weather"][0].get("main"),
-                    "weather_description": hourly_data["weather"][0].get("description"),
-                    "rain_last_hour": hourly_data.get("rain", {}).get("1h", 0),
-                    "cloud_cover": hourly_data["clouds"].get("all"),
-                    "sunrise": datetime.fromtimestamp(hourly_data["sys"].get("sunrise")).strftime("%H:%M:%S"),
-                    "sunset": datetime.fromtimestamp(hourly_data["sys"].get("sunset")).strftime("%H:%M:%S"),
-                    "weekly": weekly_data,  # Weekly forecast data
-                }
-
-                # Append processed data to the list
-                weather_data_list.append(weather_data)
-
-            except Exception as e:
-                # Log errors for debugging
-                raise
-                error_locations.append({"location": loc, "error": str(e)})
-
-        # Render the data in the template
-        context = {
-            "weather_data_list": weather_data_list
-        }
-        if error_locations and weather_data_list == []:
-            # render(request, 'index.html', {"error_message": error_locations}, status=404)
-            return "error obtaining weather data!"
-        return context
-    else:
-        # render(request, 'index.html', {'error_message': 'User has not set locations!'}, status=404)
+    coord = coordinates_list[0]
+    print("Got coordinates", coord)
+    lat, lon = coord.split(',')
+    print("lat:", lat, "lon:", lon)
+    if not coordinates_list:
         return "User has not set locations!"
+
+    RetrieveErrors = []
+    print(coord)
+    try:
+        # Retrieve weather data for the current location
+        weekly_data = main(coord)
+        hourly_data = main(coord, _type='hourly3')
+
+        # Check for API errors
+        if isinstance(weekly_data, str) and weekly_data in ("RequestFailure", "ConnectionError"):
+            RetrieveErrors.append({"location": coord, "error": weekly_data})
+
+        if isinstance(hourly_data, str) and hourly_data in ("RequestFailure", "ConnectionError"):
+            RetrieveErrors.append({"location": coord, "error": hourly_data})
+        if not (weekly_data and hourly_data):
+            return f'{weekly_data}_{hourly_data}'
+
+        # Process and format weather data
+        weather_data = {
+            "locName": hourly_data.get("name"),
+            "country": hourly_data["sys"].get("country"),
+            # Convert to Celsius
+            "temperature": hourly_data["main"].get("temp") - 273.15,
+            "icon": hourly_data["weather"][0].get("icon"),
+            "visibility": hourly_data["visibility"],
+            "feels_like": hourly_data["main"].get("feels_like") - 273.15,
+            "humidity": hourly_data["main"].get("humidity"),
+            "pressure": hourly_data["main"].get("pressure"),
+            "wind_speed": hourly_data["wind"].get("speed"),
+            "wind_direction": hourly_data["wind"].get("deg"),
+            "weather_main": hourly_data["weather"][0].get("main"),
+            "weather_description": hourly_data["weather"][0].get("description"),
+            "rain_last_hour": hourly_data.get("rain", {}).get("1h", 0),
+            "cloud_cover": hourly_data["clouds"].get("all"),
+            "sunrise": datetime.fromtimestamp(hourly_data["sys"].get("sunrise")).strftime("%H:%M:%S"),
+            "sunset": datetime.fromtimestamp(hourly_data["sys"].get("sunset")).strftime("%H:%M:%S"),
+            "weekly": weekly_data,  # Weekly forecast data
+        }
+
+    except Exception as e:
+        # Log errors for debugging
+        logger.error(e)
+        return f'Failed to obtain location data: {e}'  # JsonResponse({'status': 'status', 'code': 500}, status=500)
+
+    return weather_data
 
 
 def send_sms(message):

@@ -9,40 +9,38 @@
     <script src="{% static 'js/verify.js' %}"></script>
 </head>
 <body class="bg-gradient-to-r from-blue-500 to-sky-500 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
-        <h1 class="text-2xl font-bold text-center text-gray-800">
+    <div class="bg-white p-6 sm:p-8 rounded-xl shadow-md w-full max-w-lg space-y-6">
+        <h1 class="text-3xl font-extrabold text-center text-gray-900">
             Verify Your Email
         </h1>
-        <p class="text-center text-gray-600">
-            We've sent a verification email to your provided email address. Please check your inbox and click the link to verify your email.
+        <p class="text-center text-gray-700 leading-relaxed">
+            A verification email has been sent to <strong class="hidden text-gray-900">{{ user_email|default:"Email" }}</strong>.
+            Please check your inbox and click the link to verify your email.
         </p>
-        <div class="flex justify-center space-x-4">
 
-            <!--Form to request SMS verification code
-            <form method="POST" id="getSMS" action="{% url 'verification-form' %}" class="hidden">
-                {% csrf_token %}
-                <input type="phone" id="phone-field" value="{{ user.phone }}">
-            </form>-->
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="{% url 'await-verification' %}">
+                <button id="verifyPhoneButton" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition">
+                    Verify Phone Instead
+                </button>
+            </a>
 
-            <a href="{% url 'await-verification' %}"> <button id="verifyPhoneButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                Verify Phone Instead
-            </button></a>
-
-            <!--Form to request email verification resend-->
+            <!-- Form to request email verification resend -->
             <form method="POST" id="email-resend" action="{% url 'resend-email' %}" class="hidden">
-            {% csrf_token %}
-                <input type="email" id="email-field" value="{{ user.email }}">
+                {% csrf_token %}
+                <input type="email" id="email-field" value="{{ user_email|default:'' }}">
             </form>
 
-            <button type="submit" id="resendEmailButton" class="px-4 py-2 bg-green-400 text-gray-700 rounded hover:bg-green-600">
+            <button type="submit" id="resendEmailButton" class="px-5 py-2.5 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 transition">
                 Resend Email
             </button>
-
         </div>
+
         <p class="text-center text-gray-600 text-sm">
-            If you didn't receive the email, check your spam folder or click the resend button above.
+            Didn't receive the email? Check your spam folder or click "Resend Email" above.
         </p>
     </div>
+
 
 
     <!-- Success Modal -->

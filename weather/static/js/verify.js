@@ -4,10 +4,11 @@ document.addEventListener('DOMContentLoaded', function(){
     const statusModal = document.getElementById('statusModal');
     const statusH = document.getElementById('status-head');
     const statusC = document.getElementById('status-content');
+    const processingModal = document.getElementById('processingModal');
 
     resend.addEventListener('click', function(){
         let secondsElapsed = 0;
-
+        processingModal.classList.remove('hidden');
         const timerInterval = setInterval(() => {
             secondsElapsed++;
             resend.textContent = `${secondsElapsed}s`;
@@ -42,8 +43,10 @@ document.addEventListener('DOMContentLoaded', function(){
                 });
 
                 if (response.ok) {
+                    processingModal.classList.add('hidden');
                     statusModal.classList.remove('hidden');
                 } else {
+                    processingModal.classList.add('hidden');
                     const errorData = await response.json();
                     const errorTimeout = setTimeout(() => {
                         statusH.textContent = 'Verification Email not Sent';
@@ -54,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 }
 
                 }catch(error){
+                processingModal.classList.add('hidden');
                 console.error('Fetch error:', error);
                 const errorTimeout = setTimeout(() => {
                     statusH.textContent = 'Verification Email not Sent';

@@ -11,7 +11,6 @@ from django.http import JsonResponse
 from .models import CustomUser, Location
 from .serializers import LocationSerializer
 from .get_coordinates import CoordAdmin
-import json
 
 
 def format_errors(serializer):
@@ -54,7 +53,7 @@ class AddLocationView(APIView):
             data = {
                 "name": location_name,
                 "coordinates": coordinates
-                }
+            }
 
             # Initialize serializer with the constructed data
             serializer = LocationSerializer(data=data)
@@ -188,17 +187,53 @@ class GetUserPreferences(views.APIView):
             "notification_medium": request.user.notification_medium,
             "notification_frequency": request.user.notification_frequency,
             "verbosity": request.user.verbosity,
-            }
+        }
 
-        print(data)
         return JsonResponse({"data": data}, status=200)
 
 
 class AlterUserPreferences(views.APIView):
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        # data = json.loads(request.data)
-        print(request.data)
-        return JsonResponse({'status': 'success'}, status=200)
+        data = request.data
+        if not data:
+            return JsonResponse({'error': 'No changes were made'}, status=400)
+
+        user = request.user  # Use the authenticated user directly
+        changes = False
+        print(data)
+        # Update fields if present in the request
+        if 'notification_medium' in data:
+            notification_medium = data.get('notification_medium')
+            if notification_medium:
+                user.notification_medium = notification_medium.title()
+                changes = True
+
+        if 'notification_frequency' in data:
+            notification_frequency = data.get('notification_frequency')
+            if notification_frequency:
+                user.notification_frequency = notification_frequency.title()
+                changes = True
+
+        if 'verbosity' in data:
+            verbosity = data.get('verbosity')
+            if verbosity:
+                user.verbosity = verbosity.title()
+                changes = True
+
+        # If changes were made, attempt to save
+        if changes:
+            try:
+                user.save()
+            except Exception:
+                # Log the error e if needed
+                return JsonResponse({'status': 'error', 'code': 500,
+                                     'statusText': 'Preference update failed'},
+                                    status=500)
+            return JsonResponse({'status': 'success', 'code': 200, 'statusText': 'OK'
+                                 }, status=200)
+
+        # No valid preference changes provided
+        return JsonResponse({'status': 'error', 'code': 400, 'statusText': 'No valid preference changes provided'
+                             }, status=400)

@@ -36,6 +36,15 @@
                 </button>
             </a>
         </section>
+
+        <!-- General Errors (non-field-specific) -->
+        {% if form.non_field_errors %}
+            <div class="mt-2 text-sm text-red-500">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
 </body>
 </html>

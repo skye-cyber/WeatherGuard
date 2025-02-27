@@ -18,28 +18,28 @@
             {% csrf_token %}
             <div class="mb-4">
                 <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                <input type="text" id="username" name="username" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter your username">
+                <input type="text" id="username" name="username" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter your username" required>
                 {% for error in form.username.errors %}
                 <p class="text-sm text-red-500 mt-1">{{ error }}</p>
                 {% endfor %}
             </div>
             <div class="mb-4">
                 <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="email" name="email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter your email">
+                <input type="email" id="email" name="email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter your email" required>
                 {% for error in form.email.errors %}
                 <p class="text-sm text-red-500 mt-1">{{ error }}</p>
                 {% endfor %}
             </div>
             <div class="mb-4">
                 <label for="password1" class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password1" name="password1" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter your password">
+                <input type="password" id="password1" name="password1" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter your password" required>
                 {% for error in form.password1.errors %}
                 <p class="text-sm text-red-500 mt-1">{{ error }}</p>
                 {% endfor %}
             </div>
             <div class="mb-6">
                 <label for="password2" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                <input type="password" id="password2" name="password2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Confirm your password">
+                <input type="password" id="password2" name="password2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Confirm your password" required>
                 {% for error in form.password2.errors %}
                 <p class="text-sm text-red-500 mt-1">{{ error }}</p>
                 {% endfor %}

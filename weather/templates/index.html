@@ -6,10 +6,15 @@
     {% load custom_filters %}
     {% load static %}
     <title>WeatherGuard</title>
-    <link href="{% static 'media/images/1163622.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'icons/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'icons/site.webmanifest' %}">
+
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <script type="text/javascript" src="{% static 'js/script.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/preference.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/test.js' %}"></script>
 </head>
 <body class="bg-gradient-to-r from-[#00557f] to-sky-500 dark:bg-gray-950 transition-colors duration-300">
 
@@ -249,7 +254,7 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notification Options</label>
                         <div class="mt-1 space-y-2">
                             <label class="flex items-center gap-2">
-                                <input type="radio" id="sms-notification" value="sms" name="notification-medium" class="form-radio h-5 w-5 text-blue-600">
+                                <input type="radio" id="sms-notification" value="SMS" name="notification-medium" class="form-radio h-5 w-5 text-blue-600">
                                 <span class="text-sm">SMS</span>
                             </label>
                             <label class="flex items-center gap-2">
@@ -285,14 +290,14 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Verbosity</label>
                         <div class="flex flex-col mt-1 space-y-2">
                             <label class="flex items-center gap-2">
-                                <input type="radio" id="low-verbosity" name="verbosity" value="low" class="form-radio h-5 w-5 text-blue-600" checked>
+                                <input type="radio" id="low-verbosity" name="verbosity" value="Low" class="form-radio h-5 w-5 text-blue-600" checked>
                                 <span class="text-sm">Low</span>
                             <label class="flex items-center gap-2">
-                                <input type="radio" id="medium-verbosity" name="verbosity" value="medium" class="form-radio h-5 w-5 text-blue-600">
+                                <input type="radio" id="medium-verbosity" name="verbosity" value="Medium" class="form-radio h-5 w-5 text-blue-600">
                                 <span class="text-sm">Medium</span>
                             </label>
                             <label class="flex items-center gap-2">
-                                <input type="radio" id="high-verbosity" name="verbosity" value="high" class="form-radio h-5 w-5 text-blue-600">
+                                <input type="radio" id="high-verbosity" name="verbosity" value="High" class="form-radio h-5 w-5 text-blue-600">
                                 <span class="text-sm">High</span>
                             </label>
                         </div>
@@ -434,7 +439,10 @@
             </button>
         </div>
     </div>
-
+    <a id="testbt">
+    {% csrf_token %}
+        <button class="bg-blue-500 border-2 border-cyan-400 shadow-md">Notify now</button>
+    </a>
     </div>
     <footer class="flex justify-between md:grid md:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-flow-row bg-gradient-to-r from-sky-500 to-[#2a557f] p-4 font-semibold text-gray-800">
         <p><a href="{% url 'logout' %}" class="hover:uppercase hover:text-[#00ff7f]">Logout</a></p>
