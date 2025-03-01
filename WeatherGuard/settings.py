@@ -29,10 +29,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1', '172.17.88.229',
-    'a322-196-250-215-195.ngrok-free.app']
+    'dear-muskox-ready.ngrok-free.app']
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://a322-196-250-215-195.ngrok-free.app",  # Add your Ngrok domain
+    "https://dear-muskox-ready.ngrok-free.app",  # Add your Ngrok domain
 ]
 
 # Application definition
