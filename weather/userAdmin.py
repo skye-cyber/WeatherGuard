@@ -11,6 +11,9 @@ from django.http import JsonResponse
 from .models import CustomUser, Location
 from .serializers import LocationSerializer
 from .get_coordinates import CoordAdmin
+from rest_framework.decorators import permission_classes
+
+# from django.views.decorators.csrf import csrf_exempt
 
 
 def format_errors(serializer):
@@ -33,6 +36,7 @@ def getCoord(loc_name) -> str:
         return None
 
 
+@permission_classes([AllowAny])
 class AddLocationView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -74,6 +78,7 @@ class AddLocationView(APIView):
             return JsonResponse({"status": "error", "code": 500, "statusText": "Internal server error"}, status=500)
 
 
+@permission_classes([AllowAny])
 class LocationCreateView(generics.CreateAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
@@ -86,6 +91,7 @@ class LocationCreateView(generics.CreateAPIView):
         self.request.user.user_locations.add(location)
 
 
+@permission_classes([AllowAny])
 class ChangePasswordView(views.APIView):
     permission_classes = [IsAuthenticated]
 
@@ -126,6 +132,7 @@ class ChangePasswordView(views.APIView):
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
 
+@permission_classes([AllowAny])
 class ResetPasswordEmailView(views.APIView):
     """
     Initiates a password reset process by sending a password reset email
@@ -178,6 +185,7 @@ class ResetPasswordEmailView(views.APIView):
         )
 
 
+@permission_classes([AllowAny])
 class GetUserPreferences(views.APIView):
 
     permission_classes = [IsAuthenticated]
@@ -202,7 +210,6 @@ class AlterUserPreferences(views.APIView):
 
         user = request.user  # Use the authenticated user directly
         changes = False
-        print(data)
         # Update fields if present in the request
         if 'notification_medium' in data:
             notification_medium = data.get('notification_medium')

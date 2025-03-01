@@ -1,17 +1,11 @@
 from .models import CustomUser
 import pytz
 from .email_templates import HourlyWeatherEmail, DailyWeatherEmail, WeeklyWeatherEmail
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_200_OK
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.core.mail import EmailMultiAlternatives
 import datetime
-from django.core.mail import EmailMessage
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
 import logging
 from rest_framework.renderers import JSONRenderer
 from .weather import main as RetrieveWeatherData
@@ -33,52 +27,31 @@ def getCoordinates(user, loc=False) -> str:
     return coordinates_list[0]  # Returns the first location's coordinates
 
 
-def send_email(user, request):
-    # Generate verification token and URL
-    token = default_token_generator.make_token(user)
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
-    verification_url = reverse(
-        'verify-email', kwargs={'uidb64': uid, 'token': token})
-    verification_url = f"{get_current_site(request)}{verification_url}"
-    verification_url = verification_url if verification_url.startswith(
-        'https') else f'http://{verification_url}'
-    logger.info(f"Verification URL: {verification_url}")
-
-    subject = 'Verify your email'
-    html_message = ""
-    from_email = 'WeatherGuard'
-    recipient_list = [user.email]
-    email = EmailMessage(subject, html_message, from_email, recipient_list)
-    email.content_subtype = "html"  # this is required because the default is text/plain
-    email.send(fail_silently=False)
-
-
 class SendHourlyWeatherEmailAPIView(APIView):
     """
     Sends hourly weather emails to all users who opted for hourly notifications.
     This view should be triggered via a scheduled task.
     """
-    print("Start")
     renderer_classes = [JSONRenderer]
 
     def post(self, request, *args, **kwargs):
         now = datetime.datetime.now(pytz.utc)
         logger.info(now)
+
         # Send weekly emails at intervals of 3hours from 06:00 UTC
-        safeTimes = [2, 5, 6, 8, 9, 11]
+        safeTimes = [2, 5, 8, 11, 14, 17]  # Only send notifications at [0200hrs, 0500hrs, 0800hrs, 1100hrs, 1400hrs, 1700hrs]
         if now.hour not in safeTimes:
-            pass
-            # return Response({"status": "skipped", "message": "Not time to send weekly emails."}, status=HTTP_200_OK)
+            return Response({"status": "skipped", "message": "Not time to send weekly emails."}, status=HTTP_200_OK)
+
         # Retrieve users who opted in for hourly notifications
         hourly_users = CustomUser.objects.filter(
             notification_frequency="Hourly")
+
         errors = []
         successes = 0
         logger.info("Start loop")
-        print("Start loop")
         for user in hourly_users:
             logger.info("User:", user)
-            print("User:", user)
             coordinates = getCoordinates(user)
             weather_data = RetrieveWeatherData(coordinates, _type='hourly3')
             if not weather_data:
@@ -95,7 +68,6 @@ class SendHourlyWeatherEmailAPIView(APIView):
             from_email = "WeatherGuard"
             recipient_list = [user.email]
             logger.info(user.email)
-            print(user.email)
             email = EmailMultiAlternatives(
                 subject, email_html, from_email, recipient_list)
             email.attach_alternative(email_html, "text/html")
@@ -108,7 +80,6 @@ class SendHourlyWeatherEmailAPIView(APIView):
             "errors": errors,
         }
         logger.info(response_data)
-        print(response_data)
         return Response(response_data, status=HTTP_200_OK)
 
 
@@ -121,10 +92,10 @@ class SendDailyWeatherEmailsAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         now = datetime.datetime.now(pytz.utc)
+
         # Send daily emails only at 06:00 UTC
-        if now.hour != 6:
-            pass
-            # return Response({"status": "skipped", "message": "Not time to send weekly emails."}, status=HTTP_200_OK)
+        if now.hour != 5:  # Only send notification at 8AM
+            return Response({"status": "skipped", "message": "Not time to send weekly emails."}, status=HTTP_200_OK)
 
         # Retrieve users who opted in for weekly notifications
         daily_users = CustomUser.objects.filter(
@@ -172,20 +143,20 @@ class SendWeeklyWeatherEmailsAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         now = datetime.datetime.now(pytz.utc)
+
         # Send weekly emails only on Mondays at 06:00 UTC
-        if now.weekday() != 0 or now.hour != 6:
-            pass
-            # return Response({"status": "skipped", "message": "Not time to send weekly emails."}, status=HTTP_200_OK)
+        if now.weekday() != 5 or now.hour != 5:  # Only send notification at 8AM on Friday
+            return Response({"status": "skipped", "message": "Not time to send weekly emails."}, status=HTTP_200_OK)
 
         # Retrieve users who opted in for weekly notifications
         weekly_users = CustomUser.objects.filter(
             notification_frequency="Weekly")
         errors = []
         successes = 0
-        print("Total user:", len(weekly_users))
+        logger.info("Total user:", len(weekly_users))
         # Loop through the users, render the appropriate email content, and send the email.
         for user in weekly_users:
-            print("-----user----:", user)
+            logger.info(f"\033[1mSending to user: \033[33m{user}\033[0m")
             coordinates = getCoordinates(user)
             weather_data = RetrieveWeatherData(coordinates, _type='daily7')
             if not weather_data:
@@ -211,6 +182,6 @@ class SendWeeklyWeatherEmailsAPIView(APIView):
             "message": f"Weekly weather emails sent to {successes} users.",
             "errors": errors,
         }
-        print("Success!")
+        logger.info("Success!")
         logger.info(response_data)
         return Response(response_data, status=HTTP_200_OK)

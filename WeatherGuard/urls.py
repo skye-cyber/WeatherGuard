@@ -19,6 +19,7 @@ from django.urls import path
 from weather import views, userAdmin, notificationAdmin
 from django.conf.urls.static import static
 from django.conf import settings
+from weather.guestHandler import HandleNotifyNowAPI
 
 
 urlpatterns = [
@@ -29,6 +30,7 @@ urlpatterns = [
     path("onboard/", views.RegisterAPIView.as_view(), name="onboard"),
     path("home/", views.get_home, name="home"),
     path("logout/", views.get_login, name="logout"),
+    path("api/guest-login/", views.guest_login_api, name="guest_login_api"),
     path('geocode/', views.geocode_location, name='geocode_location'),
     path('await-verification/', views.verification_pending, name='await-verification'),
     path('verification_page/', views.get_verification, name='verification_page'),
@@ -37,13 +39,16 @@ urlpatterns = [
     path('verify-sms/', views.VerifySMSView.as_view(), name='verify-sms'),
     path('verification-form/', views.verification_form, name='verification-form'),
     path('verify-email/<str:uidb64>/<str:token>/', views.verify_email, name='verify-email'),
-    path('weather/', views.WeatherView.as_view(), name='weather'),
-    path('weather-notification/', views.WeatherNotificationView.as_view(), name='weather-notification'),
     path('new-location/', userAdmin.AddLocationView.as_view(), name='add_location'),
     path('get-user-preferences/', userAdmin.GetUserPreferences.as_view(), name='get-preference'),
     path('set-user-preferences/', userAdmin.AlterUserPreferences.as_view(), name='set-preference'),
-    # test views
-    path('notify-now/', notificationAdmin.SendHourlyWeatherEmailAPIView.as_view(), name='notify'),
+    # search
+    path('api/search_location/', views.SearchLocation.as_view(), name='search_location'),
+    # notify Apis
+    path('api/notify-now/', HandleNotifyNowAPI.as_view(), name='notify-now'),
+    path('hourly-now/', notificationAdmin.SendHourlyWeatherEmailAPIView.as_view(), name='hourly-notify'),
+    path('daily-now/', notificationAdmin.SendDailyWeatherEmailsAPIView.as_view(), name='daily-notify'),
+    path('weekly-now/', notificationAdmin.SendWeeklyWeatherEmailsAPIView.as_view(), name='daily-notify'),
 ]
 
 

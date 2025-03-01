@@ -5,7 +5,8 @@ from datetime import datetime
 # import time
 from pathlib import Path
 import requests
-
+# from .templatetags import custom_filters
+from .WGCrypto.CryptoAdmin import OPWM
 # from django.conf import settings
 
 # Create a configuration object
@@ -45,8 +46,7 @@ class Weather:
             return None
 
     def get_weekly_forecast(self, cache_file):
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={self.lat}&longitude={
-            self.lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,sunrise,sunset&timezone=auto"
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={self.lat.strip()}&longitude={self.lon.strip()}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,sunrise,sunset&timezone=auto"
 
         try:
             response = requests.get(url)
@@ -75,43 +75,13 @@ class Weather:
         else:
             return None
 
-    @staticmethod
-    def get_weather_description(weather_code):
-        weather_codes = {
-            0: "Clear sky",
-            1: "Mainly clear",
-            2: "Partly cloudy",
-            3: "Overcast",
-            45: "Fog",
-            48: "Freezing fog",
-            51: "Drizzle (light)",
-            53: "Drizzle (moderate)",
-            55: "Drizzle (heavy)",
-            61: "Rain (light)",
-            63: "Rain (moderate)",
-            65: "Rain (heavy)",
-            71: "Snow (light)",
-            73: "Snow (moderate)",
-            75: "Snow (heavy)",
-            80: "Rain showers (light)",
-            81: "Rain showers (moderate)",
-            82: "Rain showers (heavy)",
-            85: "Snow showers (light)",
-            86: "Snow showers (heavy)",
-            95: "Thunderstorm (light)",
-            96: "Thunderstorm with hail (light)",
-            99: "Thunderstorm (heavy)",
-        }
-
-        return weather_codes.get(weather_code, "Unknown weather code")
-
     def _3hrs_forecast(self, path):
-        api_key = "d1fce76f166b700e091ab7848af756db"
+        api_key = OPWM()
+        print(api_key)
 
         # weather_root = settings.MEDIA_ROOT
 
-        url = f"https://api.openweathermap.org/data/2.5/weather?lat={
-            self.lat}&lon={self.lon}&appid={api_key}"
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={self.lat.strip()}&lon={self.lon.strip()}&appid={api_key}"
 
         try:
             response = requests.get(url, timeout=None)
@@ -188,7 +158,7 @@ if __name__ == "__main__":
     if forecast:
         for day in forecast['time']:
             index = forecast['time'].index(day)
-            desc = Weather.get_weather_description(forecast['weathercode'][index])
+            desc = custom_filters.get_weather_description(forecast['weathercode'][index])
             print(f"Date: {day}")
             print(f"Max Temperature: {forecast['temperature_2m_max'][index]}°C")
             print(f"Min Temperature: {forecast['temperature_2m_min'][index]}°C")

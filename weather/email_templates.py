@@ -11,57 +11,66 @@ class WeatherEmailTemplate:
 
 class HourlyWeatherEmail(WeatherEmailTemplate):
     def render(self, weather_data, verbosity):
-        humidity = hourly_data.get('main').get('humidity')
-        temp = hourly_data.get('main').get('temp_') - 273.15,
-        temp_max = hourly_data.get('main').get('temp_max') - 273.15,
-        temp_min = hourly_data.get('main').get('temp_min') - 273.15,
-        pressure = hourly_data.get('main').get('pressure')
-        feels_like = hourly_data.get('main').get('feels_like') - 273.15,
-        sea_level = hourly_data.get('main').get('sea_level')
-        ground_level = hourly_data.get('main').get('grnd_level')
-        Location = hourly_data.get('name')
-        sunrise = hourly_data.get('sys').get('sunrise')
-        sunset = hourly_data.get('sys').get('sunset')
-        country = hourly_data.get('sys').get('country')
-        cound_cover = hourly_data.get('clouds').get('all')
-        wind_speed = hourly_data.get('wind').get('speed')
-        wind_direction = hourly_data.get('wind').get('deg')
-        weather = hourly_data.get('weather')[0].get('main')
-        weather_desc = wind_direction = hourly_data.get('weather')[0].get('description')
-        visibility = wind_direction = hourly_data.get('visibility')
+        humidity = weather_data.get('main').get('humidity')
+        temp = weather_data.get('main').get('temp') - 273.15
+        temp_max = weather_data.get('main').get('temp_max') - 273.15
+        temp_min = weather_data.get('main').get('temp_min') - 273.15
+        pressure = weather_data.get('main').get('pressure')
+        feels_like = weather_data.get('main').get("feels_like") - 273.15
+        sea_level = weather_data.get('main').get('sea_level')
+        ground_level = weather_data.get('main').get('grnd_level')
+        Location = weather_data.get('name')
+        sunrise = weather_data.get('sys').get('sunrise')
+        sunset = weather_data.get('sys').get('sunset')
+        country = weather_data.get('sys').get('country')
+        cound_cover = weather_data.get('clouds').get('all')
+        wind_speed = weather_data.get('wind').get('speed')
+        wind_direction = weather_data.get('wind').get('deg')
+        weather = weather_data.get('weather')[0].get('main')
+        weather_desc = wind_direction = weather_data.get('weather')[0].get('description')
+        visibility = wind_direction = weather_data.get('visibility')
 
         if verbosity == 'low':
             content = f"""
-            <div style="font-family: sans-serif; color: #333;">
-                <h1 style="color: #2c7be5;">Hourly Weather Update</h1>
-                <p>Temperature: {temp}°C</p>
-                <p>{weather}</p>
-            </div>
+            <section style="display: flex; justify-content: center; padding: 20px; background-color: #f4f4f4;">
+                <div style="font-family: Arial, sans-serif; color: #333; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); max-width: 400px; text-align: left;">
+                    <h1 style="color: #2c7be5; margin-bottom: 10px;">🌤 Hourly Weather Update</h1>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌡 Temperature:</strong> {temp:.2f}<span style="color: #0055ff;">°C</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌥 Main Weather:</strong> {weather} - {weather_desc}</p>
+                </div>
+            </section>
+
             """
         elif verbosity == 'medium':
             content = f"""
-            <div style="font-family: sans-serif; color: #333;">
-                <h1 style="color: #2c7be5;">Hourly Weather Update</h1>
-                <p>Temperature: {temp}°C</p>
-                <p>Feels Like: {feels_like}°C</p>
-                <p>Weather: {weather} - {weather_desc}</p>
-                <p>Wind: {wind_speed} m/s</p>
-            </div>
+            <section style="display: flex; justify-content: center; padding: 20px; background-color: #f4f4f4;">
+                <div style="font-family: Arial, sans-serif; color: #333; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); max-width: 450px; text-align: left;">
+                    <h1 style="color: #2c7be5; margin-bottom: 10px;">🌤 Hourly Weather Update</h1>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌡 Temperature:</strong> {temp:.2f}<span style="color: #0055ff;">°C</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🤔 Feels Like:</strong> {feels_like:.2f}<span style="color: #0055ff;">°C</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌥 Weather:</strong> {weather} - {weather_desc}</p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>💨 Wind Speed:</strong> {wind_speed} <span style="color: #0055ff;">m/s</span></p>
+                </div>
+            </section>
+
             """
         elif verbosity == 'high':
             content = f"""
-            <div style="font-family: sans-serif; color: #333;">
-                <h1 style="color: #2c7be5;">Hourly Weather Update</h1>
-                <p><strong>Location:</strong> {Location}, {country}</p>
-                <p><strong>Temperature:</strong> {temp}°C</p>
-                <p><strong>Feels Like:</strong> {feels_like}°C</p>
-                <p><strong>Humidity:</strong> {humidity}%</p>
-                <p><strong>Pressure:</strong> {pressure} hPa</p>
-                <p><strong>Visibility:</strong> {visibility} m</p>
-                <p><strong>Wind:</strong> {wind_speed} m/s, {wind_direction}°</p>
-                <p><strong>Weather:</strong> {weather} - {weather_desc}</p>
-                <p><strong>Cloud Cover:</strong> {cound_cover}%</p>
-            </div>
+            <section style="display: flex; justify-content: center; padding: 20px; background-color: #f4f4f4;">
+                <div style="font-family: Arial, sans-serif; color: #333; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); max-width: 500px; text-align: left;">
+                    <h1 style="color: #2c7be5; margin-bottom: 10px;">Hourly Weather Update</h1>
+                    <p style="margin: 5px 0;"><strong>📍 Location:</strong> {Location}, {country}</p>
+                    <p style="margin: 5px 0;"><strong>🌡 Temperature:</strong> {temp:.2f}<span style="color: #0055ff;">°C</span></p>
+                    <p style="margin: 5px 0;"><strong>🤔 Feels Like:</strong> {feels_like:.2f}<span style="color: #0055ff;">°C</span></p>
+                    <p style="margin: 5px 0;"><strong>💧 Humidity:</strong> {humidity}<span style="color: #0055ff;">%</span></p>
+                    <p style="margin: 5px 0;"><strong>🌀 Pressure:</strong> {pressure} <span style="color: #0055ff;">hPa</span></p>
+                    <p style="margin: 5px 0;"><strong>👀 Visibility:</strong> {visibility} <span style="color: #0055ff;">m</span></p>
+                    <p style="margin: 5px 0;"><strong>💨 Wind:</strong> {wind_speed} <span style="color: #0055ff;">m/s</span> | <strong>⬆ Direction:</strong> {wind_direction}°</p>
+                    <p style="margin: 5px 0;"><strong>🌤 Weather:</strong> {weather} - {weather_desc}</p>
+                    <p style="margin: 5px 0;"><strong>☁ Cloud Cover:</strong> {cound_cover}<span style="color: #0055ff;">%</span></p>
+                </div>
+            </section>
+
             """
         else:
             content = "<p>Invalid verbosity level.</p>"
@@ -99,42 +108,44 @@ class DailyWeatherEmail(WeatherEmailTemplate):
         # Base content includes sunrise/sunset information
         if verbosity == 'low':
             content = f"""
-            <section style="display: flex; justify-content: center;">
-                <div style="font-family: sans-serif; color: #333;">
-                    <h1 style="color: #28a745;">Daily Weather Update</h1>
-                    <h3 style="color: #1447ff;">{custom_filters.get_day(date_OBJ).title()}-{date_OBJ}</h3>
-                    <p>Temperature: {temp_avg:.2f}<span style="color: #0055ff;">°C</span></p>
-                    <p>Sunrise: {custom_filters.normal_time(sunrise)} | Sunset: {custom_filters.normal_time(sunset)}</p>
+            <section style="display: flex; justify-content: center; padding: 20px; background-color: #f4f4f4;">
+                <div style="font-family: Arial, sans-serif; color: #333; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); max-width: 450px; text-align: center;">
+                    <h1 style="color: #28a745; margin-bottom: 10px;">🌞 Daily Weather Update</h1>
+                    <h3 style="color: #1447ff; margin-bottom: 10px;">{custom_filters.get_day(date_OBJ).title()} - {date_OBJ}</h3>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌡 Temperature:</strong> {temp_avg:.2f}<span style="color: #0055ff;">°C</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌅 Sunrise:</strong> {custom_filters.normal_time(sunrise)} | <strong>🌇 Sunset:</strong> {custom_filters.normal_time(sunset)}</p>
                 </div>
             </section>
+
             """
         elif verbosity == 'medium':
             content = f"""
-            <section style="display: flex; justify-content: center;">
-                <div style="font-family: sans-serif; color: #333;">
-                    <h1 style="color: #28a745;">Daily Weather Update</h1>
-                    <p>Average Temperature: {temp_avg:.2f}<span style="color: #0055ff;">°C</span></p>
-                    <p>Maximum Temperature: {temp_max}<span style="color: #0055ff;">°C</span></p>
-                    <p>Minimum Temperature: {temp_min}<span style="color: #0055ff;">°C</span></p>
-                    <p>Sunrise: {custom_filters.normal_time(sunrise)} | Sunset: {custom_filters.normal_time(sunset)}</p>
-                    <p>Weather: {weather_main}</p>
+            <section style="display: flex; justify-content: center; padding: 20px; background-color: #f4f4f4;">
+                <div style="font-family: Arial, sans-serif; color: #333; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); max-width: 450px; text-align: center;">
+                    <h1 style="color: #28a745; margin-bottom: 10px;">🌞 Daily Weather Update</h1>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌡 Average Temperature:</strong> {temp_avg:.2f}<span style="color: #0055ff;">°C</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🔥 Maximum Temperature:</strong> {temp_max:.2f}<span style="color: #ff5733;">°C</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>❄ Minimum Temperature:</strong> {temp_min:.2f}<span style="color: #0055ff;">°C</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌅 Sunrise:</strong> {custom_filters.normal_time(sunrise)} | <strong>🌇 Sunset:</strong> {custom_filters.normal_time(sunset)}</p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>☁ Weather:</strong> {weather_main}</p>
                 </div>
             </section>
+
             """
         elif verbosity == 'high':
             content = f"""
-            <section style="display: flex; justify-content: center;">
-                <div style="font-family: sans-serif; color: #333;">
-                    <h1 style="color: #28a745;">Daily Weather Update</h1>
-                    <h3><strong>Location:</strong> {loc.title()} | <strong>Timezone:</strong> {timezone.title()}</h3>
-                    <p><strong>Temperature:</strong> {temp_avg:.2f}<span style="color: #0055ff;">°C</span></p>
-                    <p><strong>Precipitation:</strong> {precip} <span style="color: #0055ff;">°C</span></p>
-                    <p><strong>Humidity:</strong> N/A <span style="color: #0055ff;">%</span></p>
-                    <p><strong>Pressure:</strong> N/A <span style="color: #0055ff;">hPa</span></p>
-                    <p><strong>Visibility:</strong> N/A <span style="color: #0055ff;">m</span></p>
-                    <p><strong>Wind:</strong> N/A m/s, N/A<span style="color: #0055ff;">°</span></p>
-                    <p><strong>Weather:</strong> <span style="color: #ff007f;"><strong>{weather_main}</strong></span></p>
-                    <p><strong>Sunrise:</strong> {custom_filters.normal_time(sunrise)} | <strong>Sunset:</strong> {custom_filters.normal_time(sunset)}</p>
+            <section style="display: flex; justify-content: center; padding: 20px; background-color: #f4f4f4;">
+                <div style="font-family: Arial, sans-serif; color: #333; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); max-width: 500px; text-align: center;">
+                    <h1 style="color: #28a745; margin-bottom: 10px;">🌞 Daily Weather Update</h1>
+                    <h3 style="margin: 10px 0;"><strong>📍 Location:</strong> {loc.title()} | <strong>⏳ Timezone:</strong> {timezone.title()}</h3>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌡 Temperature:</strong> {temp_avg:.2f}<span style="color: #0055ff;">°C</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌧 Precipitation:</strong> {precip} <span style="color: #0055ff;">mm</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>💧 Humidity:</strong> N/A<span style="color: #0055ff;">%</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌀 Pressure:</strong> N/A<span style="color: #0055ff;"> hPa</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>👀 Visibility:</strong> N/A<span style="color: #0055ff;"> m</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>💨 Wind:</strong> N/A m/s, N/A<span style="color: #0055ff;">°</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>☁ Weather:</strong> <span style="color: #ff007f;"><strong>{weather_main}</strong></span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>🌅 Sunrise:</strong> {custom_filters.normal_time(sunrise)} | <strong>🌇 Sunset:</strong> {custom_filters.normal_time(sunset)}</p>
                 </div>
             </section>
             """
@@ -192,18 +203,25 @@ class WeeklyWeatherEmail:
             elif verbosity == "high":
                 forecast_items += f"""
                 <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd;"><span style="color: #00a3ef;">{custom_filters.get_day(date).title()}</span>-{date}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{custom_filters.get_weather_description(main_weather)}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">
-                        <strong>High:</strong> {temp_max}°C<br>
-                        <strong>Low:</strong> {temp_min}°C
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <span style="color: #00a3ef; font-weight: bold;">{custom_filters.get_day(date).title()}</span> - {date}
                     </td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">Precipitation: {precip} <span style="color: #0055ff;">mm</span></td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">
-                        <strong>Sunrise:</strong> {custom_filters.normal_time(sunrise)}<br>
-                        <strong>Sunset:</strong> {custom_filters.normal_time(sunset)}
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        {custom_filters.get_weather_description(main_weather)}
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <span style="color: #ff654a; font-weight: bold;">High:</span> {temp_max}°C<br>
+                        <span style="color: #5bc0de; font-weight: bold;">Low:</span> {temp_min}°C
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <span style="color: #0055ff;">Precipitation:</span> {precip} mm
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <strong style="font-weight: bold;">Sunrise:</strong> {custom_filters.normal_time(sunrise)}<br>
+                        <strong style="font-weight: bold;">Sunset:</strong> {custom_filters.normal_time(sunset)}
                     </td>
                 </tr>
+
                 """
             else:
                 forecast_items += "<tr><td colspan='4'>Invalid verbosity level.</td></tr>"

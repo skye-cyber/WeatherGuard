@@ -134,10 +134,18 @@ _hourly_data = '''
     "name": "Embu",
     "cod": 200
 }'''
-hourly_data = json.loads(_hourly_data)
-data = hourly_data.get('weather')[0].get('main')
-print(data)
 
+data1 = '''{
+    "coordinates": {
+        "lat": "804",
+        "lon": "786456"
+    }
+}'''
+
+
+data1 = json.loads(data1)
+lat = data1.get('coordinates')['lat']
+print(lat)
 
 def simulate(h: bool = False, w: bool = False):
     # Process and format weather data

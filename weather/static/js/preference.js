@@ -69,7 +69,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     // Add change event listener
     const saveSettings = document.getElementById('save-settings');
 
-    saveSettings.addEventListener('click', () =>{
+    saveSettings.addEventListener('click', (event) =>{
+        event.stopPropagation()
         const parentVerbosity = document.getElementById('verbosity');
 
         const verbosity = parentVerbosity.querySelector('input[name="verbosity"]:checked').value;
@@ -82,7 +83,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         const medium = parentMedium.querySelector('input[name="notification-medium"]:checked').value;
 
         try{
-            window.HandleLoading('show');
+            window.HandleLoading('show', 'Updating preference! Standby...');
             data = {
                 "notification_medium": medium,
                 "notification_frequency": frequency,

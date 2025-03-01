@@ -1,10 +1,12 @@
+from django.contrib.auth import authenticate, login
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, get_user_model, logout
+from django.contrib.auth import get_user_model, logout
 import logging
 import random
+import json
 from datetime import datetime
-
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -14,29 +16,29 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core import exceptions
 from django.core.mail import EmailMessage
 # from django.db.models import QuerySet
-from django.http import (HttpResponse, HttpResponseBadRequest,
-                         HttpResponseForbidden, HttpResponseRedirect,
+from django.http import (HttpResponseForbidden, HttpResponseRedirect,
                          JsonResponse, StreamingHttpResponse)
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.views import View
 # from django_ratelimit.decorators import ratelimit
-from rest_framework import serializers, status
-from rest_framework.decorators import api_view
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer
 from twilio.rest import Client
-
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpRequest
+from django.core.handlers.wsgi import WSGIRequest
 from .get_coordinates import CoordAdmin
 from .models import CustomUser, Profile
 from .serializers import CustomUserSerializer
 from .weather import main
-from .tests import simulate
+from django.template.loader import render_to_string
 
 User = get_user_model()
+
 logger = logging.getLogger(__name__)
 
 
@@ -54,8 +56,10 @@ def get_verification(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def geocode_location(request):
     location = request.GET.get('loc_name')
+
     if not location:
         return Response({'error': 'Location is required'}, status=400)
 
@@ -74,7 +78,7 @@ def geocode_location(request):
 def get_home(request):
     content = get_weatherData(request)
     context = {"weather_data_dict": content}
-    logger.info("Got---", content)
+    # logger.info(f"Got---{content}")
     if not content:
         return render(request, 'index.html')
     elif isinstance(content, str):
@@ -82,6 +86,71 @@ def get_home(request):
     return render(request, 'index.html', context)
 
 
+@permission_classes([IsAuthenticated])
+class SearchLocation(APIView):
+    def post(self, request, *args, **kwargs):
+        # ✅ Save request body **before** DRF reads it
+        # Use the cached body instead of request.body
+        raw_body = getattr(request, '_cached_body', b'')
+
+        # ✅ Clone the Django WSGIRequest with the same properties
+        django_request = WSGIRequest(request._request.environ)  # Convert DRF request to Django request
+        django_request.method = request.method
+        django_request._body = raw_body  # Restore original body
+        django_request.META = request.META
+
+        location = request.data.get('loc_name')
+
+        Coordadmin = CoordAdmin(location)
+        coord = Coordadmin.Control()
+
+        if not coord:
+            return Response({'error': 'Coordinates not found'}, status=404)
+
+        coord_list = list(coord)
+
+        logger.info(f"\033[1mCoord_Search Results: \033[1;33m{coord_list}\033[0m")
+
+        content = get_weatherData(django_request, coord_list)
+
+        context = {"weather_data_dict": content}
+
+        if not context or isinstance(context, str):
+            return JsonResponse({'status': 'error', 'code': 401}, status=401)
+
+        # Render the entire index.html template to a string.
+        rendered_html = render_to_string('index.html', context, request=request)
+        return JsonResponse({
+            "status": "success", "html": rendered_html})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@csrf_exempt  # Disable CSRF check
+def guest_login_api(request):
+    """
+    API to log in a guest user.
+    """
+    guest_username = "Guest101"
+    guest_password = "weatherGuardGuest"
+
+    user = authenticate(username=guest_username, password=guest_password)
+    if user is not None:
+        login(request, user)
+        # token, created = Token.objects.get_or_create(user=user)  # Get or create auth token
+
+        return JsonResponse({
+            'status': 'success',
+            'code': 200,
+            "message": "Logged in as Guest!",
+            # "username": user.username,
+            # "token": token.key
+        }, status=200)
+    else:
+        return JsonResponse({"error": "Guest login failed."}, status=400)
+
+
+@permission_classes([AllowAny])
 class SendSMSVerificationCodeView(APIView):
     def post(self, request, *args, **kwargs):
         phone_number = request.data.get('phone_number')
@@ -178,6 +247,7 @@ def send_email(user, request):
     email.send(fail_silently=False)
 
 
+@permission_classes([AllowAny])
 class RegisterAPIView(APIView):
     renderer_classes = [JSONRenderer]  # Force JSON responses
 
@@ -214,6 +284,7 @@ class RegisterAPIView(APIView):
         return Response({'errors': serializer.errors}, status=HTTP_400_BAD_REQUEST)
 
 
+@permission_classes([AllowAny])
 class ResendEmailAPIView(APIView):
     def post(self, request, *args, **kwargs):
         # if request.data.get('email') else user.email
@@ -295,6 +366,7 @@ def verify_email(request, uidb64, token):
         return redirect('onboard')
 
 
+@permission_classes([AllowAny])
 class VerifySMSView(APIView):
     def post(self, request, *args, **kwargs):
         entered_code = request.data.get('verification_code')
@@ -399,20 +471,24 @@ def GetLocationDetail(request, name=False, coord=False):
     return JsonResponse(list(data), safe=False)
 
 
-def get_weatherData(request):
-    locations = request.user.user_locations.filter(users=request.user)
-    coordinates_list = [location.coordinates for location in locations]
-    # Get all locations from the database or source
-    # Ensure this function returns a list of locations
-    coord = coordinates_list[0]
-    print("Got coordinates", coord)
-    lat, lon = coord.split(',')
+def get_weatherData(request, coord_search: str = None) -> dict:
+    if not coord_search:
+        locations = request.user.user_locations.filter(users=request.user)
+        coordinates_list = [location.coordinates for location in locations]
+        if not coordinates_list:
+            return "User has not set locations!"
+        # Get all locations from the database or source
+        # Ensure this function returns a list of locations
+        coord = coordinates_list[0]
+        lat, lon = coord.split(',')
+    else:
+        lat, lon = coord_search
+        coord = f"{lat}, {lon}"
+
     print("lat:", lat, "lon:", lon)
-    if not coordinates_list:
-        return "User has not set locations!"
 
     RetrieveErrors = []
-    print(coord)
+
     try:
         # Retrieve weather data for the current location
         weekly_data = main(coord)
@@ -451,43 +527,9 @@ def get_weatherData(request):
 
     except Exception as e:
         # Log errors for debugging
+        raise
         logger.error(e)
-        return f'Failed to obtain location data: {e}'  # JsonResponse({'status': 'status', 'code': 500}, status=500)
+        # JsonResponse({'status': 'status', 'code': 500}, status=500)
+        return f'Failed to obtain location data: {e}'
 
     return weather_data
-
-
-def send_sms(message):
-    account_sid = 'YOUR_TWILIO_ACCOUNT_SID'
-    auth_token = 'YOUR_TWILIO_AUTH_TOKEN'
-    client = Client(account_sid, auth_token)
-    message = client.messages.create(
-        body=message,
-        from_='YOUR_TWILIO_PHONE_NUMBER',
-        to='RECIPIENT_PHONE_NUMBER'
-    )
-    return message.sid
-
-
-class WeatherView(View):
-    def get(self, request):
-        api_key = 'YOUR_API_KEY'
-        city = 'Your_City'
-        url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}'
-        response = requests.get(url)
-        data = response.json()
-        return JsonResponse(data)
-
-
-class WeatherNotificationView(View):
-    def get(self, request):
-        weather_data = requests.get(
-            'http://api.openweathermap.org/data/2.5/weather?q=Your_City&appid=YOUR_API_KEY').json()
-        weather_description = weather_data.get(
-            'weather', [{}])[0].get('description', '')
-        if 'rain' in weather_description.lower():
-            message = "It's going to rain today. Don't forget your umbrella!"
-            send_sms(message)
-            return JsonResponse({'status': 'Notification sent'})
-        else:
-            return JsonResponse({'status': 'No rain forecasted'})

@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from weather.WGCrypto.CryptoAdmin import EMD
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,8 +27,13 @@ SECRET_KEY = 'django-insecure-zq1w*ijix^9w2_v&q5&gb&)+_b*+ngc@jop)81(k*8e%f(rj=y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '172.17.88.229']
+ALLOWED_HOSTS = [
+    '127.0.0.1', '172.17.88.229',
+    'a322-196-250-215-195.ngrok-free.app']
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://a322-196-250-215-195.ngrok-free.app",  # Add your Ngrok domain
+]
 
 # Application definition
 
@@ -49,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'weather.middleware.middleware.CacheRequestBodyMiddleware'
 ]
 
 ROOT_URLCONF = 'WeatherGuard.urls'
@@ -71,6 +79,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'WeatherGuard.wsgi.application'
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    #'DEFAULT_PERMISSION_CLASSES': [
+     #   'rest_framework.permissions.IsAuthenticated',
+    #],
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -141,8 +158,8 @@ EMAIL_PORT = 587  # Commonly used ports are 587 (TLS) or 465 (SSL)
 EMAIL_USE_TLS = True  # Set to True for port 587, False for port 465
 # EMAIL_USE_SSL = False  # Set to True for port 465, False for port 587
 EMAIL_HOST_USER = 'swskye17@gmail.com'
-EMAIL_HOST_PASSWORD = ''
 
+EMAIL_HOST_PASSWORD = EMD()
 
 # Twilio config
 TWILIO_ACCOUNT_SID = ''

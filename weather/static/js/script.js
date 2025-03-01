@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', ()=>{
+    const user = document.getElementById('user-display');
+    if(user.textContent.toLowerCase()==='guest101'){
+        OrientGuest(user.textContent);
+    }
+
     const paneButton = document.getElementById('togglePanel');
     const sidePanel = document.getElementById('sidePanel');
 
@@ -45,7 +50,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const AddlocationBt = document.getElementById('save-location');
     const locationInput = document.getElementById('location-input');
     AddlocationBt.addEventListener('click', () =>{
-        HandleLoading("show");
+        HandleLoading("show", "Working on it! Standby...");
         const locationValue = locationInput.value;
         const locationData = {'location_name': locationValue}
 
@@ -104,10 +109,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
         }, 310)
     }
 
-    function HandleLoading(task){
+    function HandleLoading(task, message=null){
+
         const loadingModal = document.getElementById('loadingModal');
         const modalMainBox = document.getElementById('modalMainBox');
         if (task==="show"){
+            if (message){
+                const msgBox = document.getElementById('loadingMSG');
+                msgBox.textContent = message;
+            }
             loadingModal.classList.remove('hidden');
             modalMainBox.classList.remove('animate-exit');
             modalMainBox.classList.add('animate-enter')
@@ -118,7 +128,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
                 loadingModal.classList.add('hidden');
             }, 310)
         }
-    };
+    }
+
+
+    function OrientGuest(username){
+        //
+    }
 
     window.displayStatus=displayStatus;
     window.hideStatus=hideStatus;
