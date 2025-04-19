@@ -1,3 +1,7 @@
+[![PyPI Version](https://img.shields.io/pypi/v/WeatherGuard)](https://pypi.org/project/WeatherGuard)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://opensource.org/licenses/GPL-3.0)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/skye-cyber/WeatherGuard/ci.yml?branch=main)](https://github.com/skye-cyber/WeatherGuard/actions)
 # WeatherGuard
 
 **Project Link:** [https://github.com/skye-cyber/WeatherGuard](https://github.com/skye-cyber/WeatherGuard)

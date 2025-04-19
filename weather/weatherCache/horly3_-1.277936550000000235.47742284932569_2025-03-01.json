@@ -1,0 +1,44 @@
+{
+    "coord": {
+        "lon": 35.4774,
+        "lat": -1.2779
+    },
+    "weather": [
+        {
+            "id": 804,
+            "main": "Clouds",
+            "description": "overcast clouds",
+            "icon": "04d"
+        }
+    ],
+    "base": "stations",
+    "main": {
+        "temp": 297.39,
+        "feels_like": 296.52,
+        "temp_min": 297.39,
+        "temp_max": 297.39,
+        "pressure": 1009,
+        "humidity": 25,
+        "sea_level": 1009,
+        "grnd_level": 818
+    },
+    "visibility": 10000,
+    "wind": {
+        "speed": 2.26,
+        "deg": 135,
+        "gust": 5.34
+    },
+    "clouds": {
+        "all": 100
+    },
+    "dt": 1740843106,
+    "sys": {
+        "country": "KE",
+        "sunrise": 1740800795,
+        "sunset": 1740844479
+    },
+    "timezone": 10800,
+    "id": 189574,
+    "name": "Lemek",
+    "cod": 200
+}

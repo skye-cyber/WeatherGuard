@@ -1,0 +1,44 @@
+{
+    "coord": {
+        "lon": 36.0712,
+        "lat": -0.2803
+    },
+    "weather": [
+        {
+            "id": 803,
+            "main": "Clouds",
+            "description": "broken clouds",
+            "icon": "04d"
+        }
+    ],
+    "base": "stations",
+    "main": {
+        "temp": 302.78,
+        "feels_like": 301,
+        "temp_min": 302.78,
+        "temp_max": 302.78,
+        "pressure": 1008,
+        "humidity": 14,
+        "sea_level": 1008,
+        "grnd_level": 820
+    },
+    "visibility": 10000,
+    "wind": {
+        "speed": 5.16,
+        "deg": 8,
+        "gust": 5.7
+    },
+    "clouds": {
+        "all": 64
+    },
+    "dt": 1740832128,
+    "sys": {
+        "country": "KE",
+        "sunrise": 1740800684,
+        "sunset": 1740844304
+    },
+    "timezone": 10800,
+    "id": 184622,
+    "name": "Nakuru",
+    "cod": 200
+}
