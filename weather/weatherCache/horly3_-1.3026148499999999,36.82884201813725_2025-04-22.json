@@ -1,0 +1,47 @@
+{
+    "coord": {
+        "lon": 36.8288,
+        "lat": -1.3026
+    },
+    "weather": [
+        {
+            "id": 500,
+            "main": "Rain",
+            "description": "light rain",
+            "icon": "10d"
+        }
+    ],
+    "base": "stations",
+    "main": {
+        "temp": 294.03,
+        "feels_like": 294.16,
+        "temp_min": 294.03,
+        "temp_max": 294.03,
+        "pressure": 1013,
+        "humidity": 76,
+        "sea_level": 1013,
+        "grnd_level": 839
+    },
+    "visibility": 10000,
+    "wind": {
+        "speed": 4.49,
+        "deg": 81,
+        "gust": 5.58
+    },
+    "rain": {
+        "1h": 0.35
+    },
+    "clouds": {
+        "all": 70
+    },
+    "dt": 1745329654,
+    "sys": {
+        "country": "KE",
+        "sunrise": 1745292524,
+        "sunset": 1745335997
+    },
+    "timezone": 10800,
+    "id": 184736,
+    "name": "Nairobi South",
+    "cod": 200
+}
